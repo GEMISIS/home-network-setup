@@ -17,6 +17,16 @@
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  # Ensure system logs persist across reboots and are sized reasonably
+  services.journald.extraConfig = ''
+    Storage=persistent
+    SystemMaxUse=500M
+    RuntimeMaxUse=200M
+  '';
+
+  # Capture program crashes for later inspection
+  systemd.coredump.enable = true;
+
   # Programs we need by default
   programs.vim.enable = true;
   programs.ssh = {
