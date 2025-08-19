@@ -1,5 +1,5 @@
 # Home Network Setup
-This is a quick repository for how my home network is setup. It's designed to be written as a configuration code, and utilizes AI to help manage its setup.
+This is a quick repository for how my home network is setup. It's designed to be written as configuration code and now uses a Nix flake with Home Manager to manage applications.
 
 ## Overview
 

@@ -27,28 +27,6 @@
   # Capture program crashes for later inspection
   systemd.coredump.enable = true;
 
-  # Programs we need by default
-  programs.vim.enable = true;
-  programs.ssh = {
-    startAgent = true;
-    knownHosts.github = {
-      hostNames = [ "github.com" ];
-      publicKey = "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
-    };
-    extraConfig = ''
-      Host github.com
-        User git
-        IdentityFile = ~/.ssh/gemisis-git
-        IdentitiesOnly yes
-    '';
-  };
-  programs.git = {
-    enable = true;
-    config = {
-      init.defaultBranch = "main";
-    };
-  };
-
   # Device basics
   networking.hostName = "McAlister-Home";
   time.timeZone = "America/Los_Angeles";
