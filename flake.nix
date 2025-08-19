@@ -10,6 +10,10 @@
   outputs = { self, nixpkgs, home-manager }:
     let
       system = "x86_64-linux";
+      pkgsUnfree = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
     in {
       nixosConfigurations.McAlister-Home = nixpkgs.lib.nixosSystem {
         inherit system;
@@ -22,6 +26,10 @@
             home-manager.users.gemisis = import ./home/gemisis.nix;
           }
         ];
+      };
+
+      devShells.${system}.default = pkgsUnfree.mkShell {
+        NIXPKGS_ALLOW_UNFREE = "1";
       };
     };
 }
