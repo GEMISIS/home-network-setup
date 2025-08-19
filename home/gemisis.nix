@@ -8,9 +8,10 @@
 
   programs.vim.enable = true;
 
+  services.ssh-agent.enable = true;
+
   programs.ssh = {
     enable = true;
-    startAgent = true;
     knownHosts.github = {
       hostNames = [ "github.com" ];
       publicKey = "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
@@ -18,13 +19,17 @@
     extraConfig = ''
       Host github.com
         User git
-        IdentityFile = ~/.ssh/gemisis-git
+        IdentityFile ~/.ssh/gemisis-git
         IdentitiesOnly yes
     '';
   };
 
   programs.git = {
     enable = true;
-    config.init.defaultBranch = "main";
+    userName = "Gerald McAlister";
+    userEmail = "gerald@example.com";
+    extraConfig = {
+      init.defaultBranch = "main";
+    };
   };
 }
