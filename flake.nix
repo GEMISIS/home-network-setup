@@ -1,6 +1,11 @@
 {
   description = "Home network setup using Nix flakes";
 
+  nixConfig = {
+    experimental-features = [ "nix-command" "flakes" ];
+    extra-nix-path = [ "nixpkgs=flake:nixpkgs" ];
+  };
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.url = "github:nix-community/home-manager";
