@@ -23,6 +23,16 @@
   networking.hostName = "McAlister-Home";
   time.timeZone = "America/Los_Angeles";
 
+  nix = {
+    settings = {
+      experimental-features = [ "nix-command" "flakes" ];
+      extra-nix-path = [ "nixpkgs=flake:nixpkgs" ];
+    };
+  };
+
+  nixpkgs.config.allowUnfree = true;
+  environment.variables.NIXPKGS_ALLOW_UNFREE = "1";
+
   system.stateVersion = "25.05";
 
 }

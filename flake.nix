@@ -35,7 +35,10 @@
 
       devShells.${system}.default = pkgsUnfree.mkShell {
         NIXPKGS_ALLOW_UNFREE = "1";
-        NIX_CONFIG = "experimental-features = nix-command flakes";
+        NIX_CONFIG = ''
+          experimental-features = nix-command flakes
+          extra-nix-path = nixpkgs=flake:nixpkgs
+        '';
       };
     };
 }
