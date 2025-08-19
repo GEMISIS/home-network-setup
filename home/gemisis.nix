@@ -12,17 +12,20 @@
 
   programs.ssh = {
     enable = true;
-    extraConfig = ''
-      Host github.com
-        User git
-        IdentityFile ~/.ssh/gemisis-git
-        IdentitiesOnly yes
-    '';
+    matchBlocks = {
+      "github.com" = {
+        user = "git";
+        identityFile = "~/.ssh/gemisis-git";
+        identitiesOnly = true;
+      };
+    };
   };
 
-  home.file.".ssh/known_hosts".text = ''
-    github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
-  '';
+  home.file.".ssh/known_hosts" = {
+    text = ''
+      github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+    '';
+  };
 
   programs.git = {
     enable = true;
