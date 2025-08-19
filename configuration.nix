@@ -47,8 +47,8 @@
     description = "Gerald's user";
     extraGroups = [ "wheel" ]; # Allow sudo
     openssh.authorizedKeys.keyFiles = [
-      /etc/nixos/keys/gemisis-quest3.pub
-      /etc/nixos/keys/gemisis-mac.pub
+      ./keys/gemisis-quest3.pub
+      ./keys/gemisis-mac.pub
     ];
   };
   security.sudo.wheelNeedsPassword = true;
