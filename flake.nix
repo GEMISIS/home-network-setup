@@ -19,7 +19,6 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.backupFileExtension = "backup";
             home-manager.users.gemisis = import ./home/gemisis.nix;
           }
         ];
