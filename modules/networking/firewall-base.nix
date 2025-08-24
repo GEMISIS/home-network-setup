@@ -14,11 +14,13 @@ in {
   };
 
   config = mkIf cfg.enable {
+    # Keep SSH closed globally; configs/services.nix sets this open by default.
     services.openssh.openFirewall = false;
+
+    networking.nftables.enable = true;
 
     networking.firewall = {
       enable = true;
-      backend = "nftables";
       rejectPackets = false;
       interfaces = {
         "${mgmtIface}".allowedTCPPorts = [22];
