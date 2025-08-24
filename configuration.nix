@@ -10,6 +10,15 @@
       ./hardware-configuration.nix
       ./configs/services.nix
       ./configs/users.nix
+      ./modules/networking/vars.nix
+      ./modules/networking/firewall-base.nix
+      ./modules/networking/dnsmasq.nix
+      ./modules/networking/nat.nix
+      ./modules/networking/firewall-policies.nix
+      ./modules/networking/discovery.nix
+      ./modules/ops/updates.nix
+      ./modules/ops/logging.nix
+      ./modules/ops/hardening.nix
     ];
 
   # Use the systemd-boot EFI boot loader.
@@ -34,6 +43,66 @@
   environment.variables.NIXPKGS_ALLOW_UNFREE = "1";
 
   system.stateVersion = "25.05";
+
+  # NIC roles (final)
+  router.hw = {
+    wan.iface = "enp8s0"; # 10G to ISP (DHCP; single public IP)
+    mgmt.iface = "enp7s0"; # 10G management/office (VLAN 70 access)
+    trunk.iface = "enp1s0"; # 2.5G trunk to core switch (10/20/30/40/50/51)
+    cameras.iface = "enp2s0"; # 2.5G trunk carrying tagged VLAN 60
+  };
+
+  # Core networking
+  router.networking = {
+    firewallBase.enable = true;
+
+    nat = {
+      enable = true;
+      useDhcpOnWan = true;
+      # wanInterface defaults to router.hw.wan.iface
+    };
+  };
+
+  # DHCP + DNS
+  router.services.dnsmasq.enable = true;
+
+  # Static lease for Home Assistant host
+  # 192.168.51.10 (MAC: d8:3a:dd:b7:09:e2)
+  services.dnsmasq.settings.dhcp-host = [
+    "d8:3a:dd:b7:09:e2,192.168.51.10,homeassistant,infinite"
+  ];
+
+  # Inter‑VLAN policies (HA ports + admin)
+  router.networking.policies = {
+    enable = true;
+
+    # ESPHome, SSDP, Chromecast control, Matter (UDP/TCP 5540 + TCP 5541)
+    haToAutomationPorts = [ 6053 1900 8008 8009 8443 5540 5541 ];
+    haToCamerasPorts = [ 554 80 443 ];
+
+    # HomeKit bridge TCP range
+    haHomeKitRange = "51720-51750";
+
+    mgmtAdminPorts = [ 22 443 ];
+  };
+
+  # mDNS reflection for HomeKit + Chromecast (51↔40, 51↔50)
+  router.networking.discovery.enable = true;
+
+  # Ops
+  router.ops.updates.enable = true;
+
+  router.ops.logging = {
+    enable = true;
+    lokiUrl = "http://192.168.70.5:3100"; # set your Loki IP/host in mgmt VLAN
+  };
+
+  router.ops.hardening = {
+    enable = true;
+    sshAllowedUsers = [ "gemisis" ];
+  };
+
+  # IPv4 only for now; leave IPv6 disabled/untouched.
 
 }
 

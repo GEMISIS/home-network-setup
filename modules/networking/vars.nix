@@ -38,13 +38,7 @@ in {
     };
   };
 
-  config = {
-    router.hw = cfg.hw;
-    router.vlans = cfg.vlans;
-    router.addr4 = cfg.addr4;
-  };
-
-  assertions = [
+  config.assertions = [
     {
       assertion = all (iface: iface != "") ifaces && (length (unique ifaces) == length ifaces);
       message = "All router interfaces must be non-empty and distinct.";

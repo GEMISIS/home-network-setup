@@ -14,9 +14,9 @@ in {
   };
 
   config = mkIf cfg.enable {
-    services.nixos-upgrade = {
+    system.autoUpgrade = {
       enable = true;
-      timerConfig.OnCalendar = "03:30";
+      dates = "03:30";
     };
 
     users.motd = "Rollback: sudo nixos-rebuild switch --rollback\n";

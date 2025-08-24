@@ -20,20 +20,16 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
-    services.crowdsec = {
-      enable = true;
-      bouncer.nftables.enable = true;
-    };
-
-    services.openssh = {
-      settings =
-        {
-          ListenAddress = [ "192.168.70.1" "0.0.0.0%wg0" ];
-          PasswordAuthentication = "no";
+    config = mkIf cfg.enable {
+      # crowdsec module not present in current nixpkgs; relying on nftables rules only.
+      services.openssh = {
+        settings =
+          {
+            ListenAddress = [ "192.168.70.1" "0.0.0.0%wg0" ];
+            PasswordAuthentication = "no";
         }
         // (mkIf (cfg.sshAllowedUsers != [ ]) {
-          AllowUsers = concatStringsSep " " cfg.sshAllowedUsers;
+          AllowUsers = cfg.sshAllowedUsers;
         });
     };
   };

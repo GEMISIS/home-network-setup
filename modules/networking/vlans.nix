@@ -44,18 +44,19 @@ let
         }
       )
       trunkVids
-    ++ [
-      let ifName = "${hw.cameras.iface}.${toString vlans.cams}";
-      ip = addr4."60";
-      in {
-      name = ifName;
-      value = { ipv4.addresses = [ parseAddr ip ]; };
-    },
-      {
-        name = hw.mgmt.iface;
-        value = { ipv4.addresses = [ parseAddr addr4."70" ]; };
-      }
-    ]
+      ++ [
+        (let
+          ifName = "${hw.cameras.iface}.${toString vlans.cams}";
+          ip = addr4."60";
+        in {
+          name = ifName;
+          value = { ipv4.addresses = [ parseAddr ip ]; };
+        })
+        {
+          name = hw.mgmt.iface;
+          value = { ipv4.addresses = [ parseAddr addr4."70" ]; };
+        }
+      ]
   );
 in
 {
