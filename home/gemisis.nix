@@ -21,6 +21,10 @@
     };
   };
 
+  home.file.".ssh/gemisis-git" = {
+    source = config.lib.file.mkOutOfStoreSymlink "/persist/ssh/gemisis-git";
+  };
+
   home.file.".ssh/known_hosts" = {
     force = true;
     text = ''
