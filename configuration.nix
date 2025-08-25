@@ -14,6 +14,7 @@
       ./modules/networking/firewall-base.nix
       ./modules/networking/dnsmasq.nix
       ./modules/networking/nat.nix
+      ./modules/networking/vlans.nix
       ./modules/networking/firewall-policies.nix
       ./modules/networking/discovery.nix
       ./modules/ops/updates.nix
@@ -54,6 +55,7 @@
 
   # Core networking
   router.networking = {
+    vlans.enable = true;
     firewallBase.enable = true;
 
     nat = {
@@ -64,13 +66,16 @@
   };
 
   # DHCP + DNS
-  router.services.dnsmasq.enable = true;
-
-  # Static lease for Home Assistant host
-  # 192.168.51.10 (MAC: d8:3a:dd:b7:09:e2)
-  services.dnsmasq.settings.dhcp-host = [
-    "d8:3a:dd:b7:09:e2,192.168.51.10,homeassistant,infinite"
-  ];
+  router.services.dnsmasq = {
+    enable = true;
+    staticLeases = [
+      {
+        mac = "d8:3a:dd:b7:09:e2";
+        ip = "192.168.51.10";
+        hostname = "homeassistant";
+      }
+    ];
+  };
 
   # Inter‑VLAN policies (HA ports + admin)
   router.networking.policies = {

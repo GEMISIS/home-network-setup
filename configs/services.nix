@@ -9,10 +9,8 @@
 
     openssh = {
       enable = true;
-      openFirewall = lib.mkDefault true;
       settings = {
         PermitRootLogin = "no";
-        PasswordAuthentication = true;
         KbdInteractiveAuthentication = false;
       };
     };
