@@ -4,13 +4,25 @@ with lib;
 
 let
   cfg = config.router.services.dnsmasq;
-  vlanIds = [ 10 20 30 40 50 51 60 70 ];
-  mkBr = vid: "br${toString vid}";
+  hw = config.router.hw;
+
   mkIP = vid: "192.168.${toString vid}";
-  mkRange = vid: "${mkBr vid},${mkIP vid}.100,${mkIP vid}.199,255.255.255.0,12h";
-  mkOptions = vid: [
-    "${mkBr vid},option:router,${mkIP vid}.1"
-    "${mkBr vid},option:dns-server,${mkIP vid}.1"
+
+  vlanIfaces = [
+    { iface = "${hw.trunk.iface}.10"; vid = 10; }
+    { iface = "${hw.trunk.iface}.20"; vid = 20; }
+    { iface = "${hw.trunk.iface}.30"; vid = 30; }
+    { iface = "${hw.trunk.iface}.40"; vid = 40; }
+    { iface = "${hw.trunk.iface}.50"; vid = 50; }
+    { iface = "${hw.trunk.iface}.51"; vid = 51; }
+    { iface = "${hw.cameras.iface}.60"; vid = 60; }
+    { iface = hw.mgmt.iface; vid = 70; }
+  ];
+
+  mkRange = e: "${e.iface},${mkIP e.vid}.100,${mkIP e.vid}.199,255.255.255.0,12h";
+  mkOptions = e: [
+    "${e.iface},option:router,${mkIP e.vid}.1"
+    "${e.iface},option:dns-server,${mkIP e.vid}.1"
   ];
 in {
   options.router.services.dnsmasq = {
@@ -36,9 +48,9 @@ in {
     services.dnsmasq = {
       enable = true;
       settings = {
-        interface   = map mkBr vlanIds;
-        dhcp-range  = map mkRange vlanIds;
-        dhcp-option = concatMap mkOptions vlanIds;
+        interface   = map (e: e.iface) vlanIfaces;
+        dhcp-range  = map mkRange vlanIfaces;
+        dhcp-option = concatMap mkOptions vlanIfaces;
         dhcp-host   = map (l: "${l.mac},${l.ip},${l.hostname}") cfg.staticLeases;
       };
     };

@@ -4,17 +4,22 @@ with lib;
 
 let
   cfg = config.router.networking.vlans;
-  hw = config.router.hw;
-  vlans = config.router.vlans;
+  hw  = config.router.hw;
+  vl  = config.router.vlans;
   addr4 = config.router.addr4.base;
 
-  parseAddr = ip:
-    let parts = splitString "/" ip; in {
+  mkIPv4 = vid:
+    let
+      cidr  = addr4."${toString vid}";
+      parts = splitString "/" cidr;
+    in {
       address = elemAt parts 0;
       prefixLength = toInt (elemAt parts 1);
     };
 
-  trunkVids = [ vlans.iot vlans.autom vlans.guest vlans.home vlans.media vlans.ha ];
+  trunkVids  = [ vl.iot vl.autom vl.guest vl.home vl.media vl.ha ];
+  camerasVid = vl.cams;
+  mgmtVid    = vl.mgmt;
 
   vlanAttrs = listToAttrs (
     map
@@ -25,8 +30,8 @@ let
       trunkVids
     ++ [
       {
-        name = "${hw.cameras.iface}.${toString vlans.cams}";
-        value = { interface = hw.cameras.iface; id = vlans.cams; };
+        name = "${hw.cameras.iface}.${toString camerasVid}";
+        value = { interface = hw.cameras.iface; id = camerasVid; };
       }
     ]
   );
@@ -36,32 +41,27 @@ let
       (vid:
         let
           ifName = "${hw.trunk.iface}.${toString vid}";
-          ip = addr4."${toString vid}";
-        in
-        {
+        in {
           name = ifName;
-          value = { ipv4.addresses = [ parseAddr ip ]; };
+          value = { ipv4.addresses = [ (mkIPv4 vid) ]; useDHCP = false; };
         }
       )
       trunkVids
-      ++ [
+    ++ [
         (let
-          ifName = "${hw.cameras.iface}.${toString vlans.cams}";
-          ip = addr4."60";
+          ifName = "${hw.cameras.iface}.${toString camerasVid}";
         in {
           name = ifName;
-          value = { ipv4.addresses = [ parseAddr ip ]; };
+          value = { ipv4.addresses = [ (mkIPv4 camerasVid) ]; useDHCP = false; };
         })
         {
           name = hw.mgmt.iface;
-          value = { ipv4.addresses = [ parseAddr addr4."70" ]; };
+          value = { ipv4.addresses = [ (mkIPv4 mgmtVid) ]; useDHCP = false; };
         }
       ]
   );
 in
 {
-  imports = [ ./vars.nix ];
-
   options.router.networking.vlans.enable = mkOption {
     type = types.bool;
     default = false;
