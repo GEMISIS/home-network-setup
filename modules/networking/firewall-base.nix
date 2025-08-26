@@ -1,12 +1,24 @@
-{
-  config,
-  lib,
-  ...
+{ config
+, lib
+, ...
 }:
 with lib; let
   cfg = config.router.networking.firewallBase;
   mgmtIface = config.router.hw.mgmt.iface;
-in {
+  vl = config.router.vlans;
+  hw = config.router.hw;
+  trunkVids = [ vl.iot vl.autom vl.guest vl.home vl.media vl.ha ];
+  vlanIfaces =
+    (map (v: "${hw.trunk.iface}.${toString v}") trunkVids)
+    ++ [ "${hw.cameras.iface}.${toString vl.cams}" mgmtIface ];
+  udpIfaceAttrs = listToAttrs (map
+    (iface: {
+      name = iface;
+      value = { allowedUDPPorts = [ 67 68 ]; };
+    })
+    vlanIfaces);
+in
+{
   options.router.networking.firewallBase.enable = mkOption {
     type = types.bool;
     default = true;
@@ -22,10 +34,12 @@ in {
     networking.firewall = {
       enable = true;
       rejectPackets = false;
-      interfaces = {
-        "${mgmtIface}".allowedTCPPorts = [22];
-        lo.allowedTCPPorts = [22];
-      };
+      interfaces =
+        udpIfaceAttrs
+        // {
+          "${mgmtIface}".allowedTCPPorts = [ 22 ];
+          lo.allowedTCPPorts = [ 22 ];
+        };
     };
   };
 }
