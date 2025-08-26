@@ -71,9 +71,13 @@ in
   config = mkIf cfg.enable {
     networking = {
       useNetworkd = true;
+      useDHCP = false;
+      networkmanager.enable = false;
+      dhcpcd.enable = false;
       vlans = vlanAttrs;
       interfaces = ifaceAttrs;
     };
+    systemd.network.enable = true;
   };
 }
 
