@@ -70,6 +70,7 @@ in
 
   config = mkIf cfg.enable {
     networking = {
+      useNetworkd = true;
       vlans = vlanAttrs;
       interfaces = ifaceAttrs;
     };
