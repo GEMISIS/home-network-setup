@@ -50,6 +50,7 @@ in {
         bind-interfaces = true;
         bind-dynamic    = true;
         interface       = map (e: e.iface) vlanIfaces;
+        listen-address  = map (e: mkRouterIP e.vid) vlanIfaces;
         except-interface = hw.wan.iface;
         dhcp-range      = map mkRange vlanIfaces;
         dhcp-option     = concatMap mkOptions vlanIfaces;

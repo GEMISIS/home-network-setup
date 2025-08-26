@@ -37,7 +37,11 @@ let
   );
 
   ifaceAttrs = listToAttrs (
-    map
+    [
+      { name = hw.trunk.iface;   value = { useDHCP = false; }; }
+      { name = hw.cameras.iface; value = { useDHCP = false; }; }
+    ]
+    ++ map
       (vid:
         let
           ifName = "${hw.trunk.iface}.${toString vid}";
@@ -79,6 +83,12 @@ in
     };
     systemd.network.enable = true;
     systemd.network.wait-online.enable = true;
+    assertions = [
+      {
+        assertion = config.router.services.dnsmasq.enable;
+        message = "dnsmasq must be enabled to provide DHCP on VLAN interfaces.";
+      }
+    ];
   };
 }
 
