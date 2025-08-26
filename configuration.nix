@@ -49,7 +49,7 @@
   router.hw = {
     wan.iface = "enp8s0"; # 10G to ISP (DHCP; single public IP)
     mgmt.iface = "enp7s0"; # 10G management/office (VLAN 70 access)
-    trunk.iface = "enp1s0"; # 2.5G trunk to core switch (10/20/30/40/50/51)
+    trunk.iface = "enp1s0"; # 2.5G trunk to WAPs and VLAN devices (10/20/30/40/50/51)
     cameras.iface = "enp2s0"; # 2.5G trunk carrying tagged VLAN 60
   };
 

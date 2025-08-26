@@ -16,28 +16,27 @@ There's a full architecture document located in ARCH.md, but as a brief overview
 | 60   | Security cameras             | ✖︎              | Wired, dedicated NIC |
 | 70   | Home‑office / Management     | ✔︎ (optional)   | Private 10 G link |
 
+Wireless access points connect directly to the router and set VLAN IDs for their clients; wired devices like media players and Home Assistant tag their own VLANs.
+
 ```mermaid
 flowchart LR
     %% ── Nodes ────────────────────────────────────────────────
     ISP["Internet / ISP"]
     Router["Linux Router<br/>Firewall · DHCP · DNS (NixOS)"]
-    SwitchNode["Managed Switch"]
     WAPs["6× WAPs<br/>SSIDs: VLAN 10 / 20 / 30 / 40"]
     Media["Media Devices<br/>VLAN 50"]
     HA["Home Assistant<br/>VLAN 51"]
     Cameras["Security Cameras<br/>VLAN 60"]
-    HomeOffice["Home-Office / Mgmt Network<br/>VLAN 70<br/>10 G enp2s0"]
+    HomeOffice["Home-Office / Mgmt Network<br/>VLAN 70<br/>10 G enp7s0"]
 
     %% ── Links ────────────────────────────────────────────────
-    ISP -->|"10 G enp1s0"| Router
+    ISP -->|"10 G enp8s0"| Router
 
-    Router -->|"2.5 G enp3s0 (trunk)<br/>VLAN 10 / 20 / 30 / 40 / 50 / 51"| SwitchNode
-    Router -->|"2.5 G enp4s0<br/>VLAN 60"| Cameras
-    Router -->|"10 G enp2s0"| HomeOffice
-
-    SwitchNode -->|"Tagged VLAN 10 / 20 / 30 / 40"| WAPs
-    SwitchNode -->|"Untagged VLAN 50"| Media
-    SwitchNode -->|"Untagged VLAN 51"| HA
+    Router -->|"2.5 G enp1s0 (802.1Q trunk)<br/>VLANs 10 / 20 / 30 / 40 / 50 / 51"| WAPs
+    Router -->|"2.5 G enp1s0 (VLAN 50)"| Media
+    Router -->|"2.5 G enp1s0 (VLAN 51)"| HA
+    Router -->|"2.5 G enp2s0<br/>VLAN 60"| Cameras
+    Router -->|"10 G enp7s0"| HomeOffice
 ```
 
 The network runs on an iKoolCore R2 Max right now, which has two 10G ports and two 2.5G ports. We break this out into multiple pieces, where most things are sharing the 2.5G ports, except for my office, which has the remaining full 10G port (since the other one is used for the actual ISP connection to prevent bottlenecking).

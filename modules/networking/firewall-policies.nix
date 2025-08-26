@@ -29,6 +29,10 @@ in {
       type = types.listOf types.int;
       default = [ 6053 1900 8008 8009 8443 5540 5541 ];
     };
+    haToIotPorts = mkOption {
+      type = types.listOf types.int;
+      default = [ 6053 1900 8008 8009 8443 5540 5541 ];
+    };
     haToCamerasPorts = mkOption {
       type = types.listOf types.int;
       default = [ 554 80 443 ];
@@ -48,6 +52,10 @@ in {
       # Home Assistant to Automation VLAN
       iifname "${vlanName vlans.ha}" oifname "${vlanName vlans.autom}" tcp dport ${mkSet cfg.haToAutomationPorts} accept
       iifname "${vlanName vlans.ha}" oifname "${vlanName vlans.autom}" udp dport ${mkSet cfg.haToAutomationPorts} accept
+
+      # Home Assistant to IoT VLAN
+      iifname "${vlanName vlans.ha}" oifname "${vlanName vlans.iot}" tcp dport ${mkSet cfg.haToIotPorts} accept
+      iifname "${vlanName vlans.ha}" oifname "${vlanName vlans.iot}" udp dport ${mkSet cfg.haToIotPorts} accept
 
       # Home Assistant to Cameras VLAN
       iifname "${vlanName vlans.ha}" oifname "${vlanName vlans.cams}" tcp dport ${mkSet cfg.haToCamerasPorts} accept

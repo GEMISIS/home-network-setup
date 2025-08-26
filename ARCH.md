@@ -23,12 +23,13 @@ You are building a single-box Linux router (running **NixOS**, see [OS options](
 | 60   | Security cameras             | ✖︎              | Wired, dedicated NIC (**tagged**) |
 | 70   | Home‑office / Management     | ✔︎ (admin-only) | Private 10 G link |
 
+Access points now connect directly to the router and tag VLANs for wireless clients. Wired endpoints such as media players and Home Assistant use VLAN‑tagged links without a core switch.
+
 ```mermaid
 flowchart LR
     %% ── Nodes ────────────────────────────────────────────────
     ISP["Internet / ISP"]
     Router["Linux Router<br/>Firewall · DHCP · DNS (NixOS)"]
-    SwitchNode["Managed Core Switch"]
     WAPs["6× WAPs<br/>SSIDs: VLAN 10 / 20 / 30 / 40"]
     Media["Media Devices<br/>VLAN 50"]
     HA["Home Assistant<br/>VLAN 51 (Static: 192.168.51.10)"]
@@ -38,14 +39,11 @@ flowchart LR
     %% ── Links (corrected NIC mapping) ────────────────────────
     ISP -->|"10 G enp8s0 (WAN · DHCP · single public IP)"| Router
 
-    Router -->|"2.5 G enp1s0 (802.1Q trunk)<br/>VLANs 10 / 20 / 30 / 40 / 50 / 51"| SwitchNode
+    Router -->|"2.5 G enp1s0 (802.1Q trunk)<br/>VLANs 10 / 20 / 30 / 40 / 50 / 51"| WAPs
+    Router -->|"2.5 G enp1s0 (VLAN 50)"| Media
+    Router -->|"2.5 G enp1s0 (VLAN 51)"| HA
     Router -->|"2.5 G enp2s0 (802.1Q trunk)<br/>VLAN 60 (tagged)"| Cameras
     Router -->|"10 G enp7s0 (access)<br/>VLAN 70"| HomeOffice
-
-    %% ── Access on the core switch ────────────────────────────
-    SwitchNode -->|"Tagged VLAN 10 / 20 / 30 / 40 to AP uplinks"| WAPs
-    SwitchNode -->|"Access (untagged) VLAN 50"| Media
-    SwitchNode -->|"Access (untagged) VLAN 51"| HA
 ```
 
 ---
@@ -56,17 +54,16 @@ flowchart LR
 |-------|-----------------|------------------|
 | ISP edge | **GPON/Active‑E ONT** | Converts fiber to 10 GbE copper (RJ‑45) hand‑off. |
 | Router | Desktop PC | 4 × NICs (2 × 10 G, 2 × 2.5 G); runs **NixOS**. |
-| Core switch | Managed L2/L3 switch (≥2.5 G) | Supports 802.1Q VLANs & trunking. |
-| WAPs (×6) | Wi‑Fi 6/6E APs | Trunk uplink; broadcast 4 SSIDs (VLAN 10/20/30/40). |
+| WAPs (×6) | Wi‑Fi 6/6E APs | Direct 802.1Q trunk to router; broadcast 4 SSIDs (VLAN 10/20/30/40). |
 | Camera segment | PoE switch (optional) | Uplink **tagged VLAN 60** only. |
 | Home‑office link | Direct 10 G DAC / RJ‑45 | VLAN 70; management PC or small switch. |
-| Endpoint pools | • Media (VLAN 50)  <br>• Home Assistant (VLAN 51, static IP) | Access ports on core switch. |
+| Endpoint pools | • Media (VLAN 50)  <br>• Home Assistant (VLAN 51, static IP) | VLAN‑tagged connections directly to router. |
 
 **Interface role map:**
-- **enp8s0** — 10 G WAN uplink (DHCP; single public IP)  
-- **enp7s0** — 10 G management/office (VLAN 70 access)  
-- **enp1s0** — 2.5 G trunk to core switch (VLANs 10/20/30/40/50/51)  
-- **enp2s0** — 2.5 G trunk for cameras (VLAN 60 **tagged**)  
+- **enp8s0** — 10 G WAN uplink (DHCP; single public IP)
+- **enp7s0** — 10 G management/office (VLAN 70 access)
+- **enp1s0** — 2.5 G trunk to WAPs and VLAN-tagged devices (VLANs 10/20/30/40/50/51)
+- **enp2s0** — 2.5 G trunk for cameras (VLAN 60 **tagged**)
 
 ---
 
@@ -150,17 +147,20 @@ Recommendations:
 | **4** | **Timely patching** | Daily `nixos‑upgrade` timer or nightly flake rebuild. |
 | **5** | **Central logging** | Promtail → Loki in VLAN 70. Loki access restricted to mgmt only. |
 | **6** | **Intrusion prevention** | CrowdSec + nftables bouncer. |
-| **7** | **802.1X (optional)** | Enable RADIUS if switch supports it. |
+| **7** | **802.1X (optional)** | Enable RADIUS if access points support it. |
 | **10** | **VLAN‑hopping prevention** | Native VLAN = none (4095). Explicit SSID ↔ VLAN mapping. |
 
 ---
 
 ## Home Assistant Communication Rules
 
-- **HA (VLAN 51)** → **Automation (20)**:  
+- **HA (VLAN 51)** → **IoT (10)**:
   TCP/UDP 6053 (ESPHome), 1900 (SSDP), 8008/8009/8443 (Chromecast control), 5540 UDP/TCP + 5541 TCP (Matter)
 
-- **HA (51)** → **Cameras (60)**:  
+- **HA (51)** → **Automation (20)**:
+  TCP/UDP 6053 (ESPHome), 1900 (SSDP), 8008/8009/8443 (Chromecast control), 5540 UDP/TCP + 5541 TCP (Matter)
+
+- **HA (51)** → **Cameras (60)**:
   TCP 80/443, TCP 554 (RTSP)
 
 - **HA (51)** → **Home (40) & Media (50)**:  
@@ -169,5 +169,5 @@ Recommendations:
 - **HomeKit Bridge**:  
   TCP range 51720–51750, mDNS 5353/UDP reflected
 
-- **Discovery**:  
-  mDNS reflection enabled between 51↔40, 51↔50, and optionally 51↔20
+- **Discovery**:
+  mDNS reflection enabled between 51↔10, 51↔20, 51↔40, and 51↔50
