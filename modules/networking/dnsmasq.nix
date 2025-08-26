@@ -47,6 +47,7 @@ in {
       enable = true;
       settings = {
         bind-interfaces = true;
+        bind-dynamic    = true;
         interface       = map (e: e.iface) vlanIfaces;
         except-interface = hw.wan.iface;
         dhcp-range      = map mkRange vlanIfaces;
