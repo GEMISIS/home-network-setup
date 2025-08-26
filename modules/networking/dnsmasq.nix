@@ -51,12 +51,15 @@ in {
         bind-dynamic    = true;
         interface       = map (e: e.iface) vlanIfaces;
         except-interface = hw.wan.iface;
-        listen-address  = map (e: mkRouterIP e.vid) vlanIfaces;
         dhcp-range      = map mkRange vlanIfaces;
         dhcp-option     = concatMap mkOptions vlanIfaces;
         dhcp-host       = map (l: "${l.mac},${l.ip},${l.hostname}") cfg.staticLeases;
         dhcp-authoritative = true;
       };
+    };
+    systemd.services.dnsmasq = {
+      wants = [ "network-online.target" ];
+      after = [ "network-online.target" ];
     };
   };
 }

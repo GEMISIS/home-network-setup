@@ -78,6 +78,7 @@ in
       interfaces = ifaceAttrs;
     };
     systemd.network.enable = true;
+    systemd.network.wait-online.enable = true;
   };
 }
 
