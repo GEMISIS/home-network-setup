@@ -8,6 +8,7 @@ let
   hw  = config.router.hw;
 
   mkIP = vid: "192.168.${toString vid}";
+  mkRouterIP = vid: "${mkIP vid}.1";
 
   trunkVids = [ vl.iot vl.autom vl.guest vl.home vl.media vl.ha ];
   trunkIfaces = map (v: { iface = "${hw.trunk.iface}.${toString v}"; vid = v; }) trunkVids;
@@ -19,8 +20,8 @@ let
 
   mkRange = e: "${e.iface},${mkIP e.vid}.100,${mkIP e.vid}.199,255.255.255.0,12h";
   mkOptions = e: [
-    "${e.iface},option:router,${mkIP e.vid}.1"
-    "${e.iface},option:dns-server,${mkIP e.vid}.1"
+    "${e.iface},option:router,${mkRouterIP e.vid}"
+    "${e.iface},option:dns-server,${mkRouterIP e.vid}"
   ];
 in {
   options.router.services.dnsmasq = {
@@ -50,9 +51,11 @@ in {
         bind-dynamic    = true;
         interface       = map (e: e.iface) vlanIfaces;
         except-interface = hw.wan.iface;
+        listen-address  = map (e: mkRouterIP e.vid) vlanIfaces;
         dhcp-range      = map mkRange vlanIfaces;
         dhcp-option     = concatMap mkOptions vlanIfaces;
         dhcp-host       = map (l: "${l.mac},${l.ip},${l.hostname}") cfg.staticLeases;
+        dhcp-authoritative = true;
       };
     };
   };
