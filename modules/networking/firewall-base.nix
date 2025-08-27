@@ -6,7 +6,7 @@ with lib; let
   cfg = config.router.networking.firewallBase;
   vl = config.router.vlans;
   hw = config.router.hw;
-  trunkVids = [ vl.iot vl.autom vl.guest vl.home vl.media vl.ha ];
+  trunkVids = [ vl.iot vl.autom vl.guest vl.media vl.ha ];
   vlanIfaces =
     (map (v: "${hw.trunk.iface}.${toString v}") trunkVids)
     ++ [

@@ -17,7 +17,8 @@ let
       prefixLength = toInt (elemAt parts 1);
     };
 
-  trunkVids  = [ vl.iot vl.autom vl.guest vl.home vl.media vl.ha ];
+  trunkVids  = [ vl.iot vl.autom vl.guest vl.media vl.ha ];
+  homeVid    = vl.home;
   camerasVid = vl.cams;
   mgmtVid    = vl.mgmt;
 
@@ -38,7 +39,7 @@ let
 
   ifaceAttrs = listToAttrs (
     [
-      { name = hw.trunk.iface;   value = { useDHCP = false; }; }
+      { name = hw.trunk.iface;   value = { ipv4.addresses = [ (mkIPv4 homeVid) ]; useDHCP = false; }; }
       { name = hw.cameras.iface; value = { useDHCP = false; }; }
     ]
     ++ map
