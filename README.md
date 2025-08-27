@@ -3,7 +3,7 @@ This is a quick repository for how my home network is setup. It's designed to be
 
 ## Overview
 
-There's a full architecture document located in ARCH.md, but as a brief overview, the network is segmented into various VLANs, with some of these not having access to the internet for security purposes. The goal is to only give internet access where needed:
+There's a full architecture document located in ARCH.md, and detailed software flows in SOFTWARE.md, but as a brief overview, the network is segmented into various VLANs, with some of these not having access to the internet for security purposes. The goal is to only give internet access where needed:
 
 | VLAN | Purpose                       | Internet Access | Notes |
 |------|------------------------------|-----------------|-------|
@@ -12,31 +12,32 @@ There's a full architecture document located in ARCH.md, but as a brief overview
 | 30   | Guest network                | ✔︎              | Wi‑Fi SSID #3 |
 | 40   | Home‑user devices            | ✔︎              | Wi‑Fi SSID #4 |
 | 50   | Media (Apple TV, consoles)   | ✔︎              | Wired only |
-| 51   | Home‑Assistant               | ✔︎              | Wired only |
-| 60   | Security cameras             | ✖︎              | Wired, dedicated NIC |
+| 51   | Home‑Assistant               | ✔︎              | Untagged · static IP |
+| 60   | Security cameras             | ✖︎              | Untagged on dedicated NIC |
 | 70   | Home‑office / Management     | ✔︎ (optional)   | Private 10 G link |
 
-Wireless access points connect directly to the router and set VLAN IDs for their clients; wired devices like media players and Home Assistant tag their own VLANs.
+Wireless access points tag VLAN IDs for their clients. Wired devices connect through unmanaged switches; untagged traffic lands in VLAN 50 by default. The router uses MAC rules to place the Home Assistant server in VLAN 51 and cameras on VLAN 60.
 
 ```mermaid
 flowchart LR
-    %% ── Nodes ────────────────────────────────────────────────
-    ISP["Internet / ISP"]
-    Router["Linux Router<br/>Firewall · DHCP · DNS (NixOS)"]
-    WAPs["6× WAPs<br/>SSIDs: VLAN 10 / 20 / 30 / 40"]
-    Media["Media Devices<br/>VLAN 50"]
-    HA["Home Assistant<br/>VLAN 51"]
-    Cameras["Security Cameras<br/>VLAN 60"]
-    HomeOffice["Home-Office / Mgmt Network<br/>VLAN 70<br/>10 G enp7s0"]
+    Router["Linux Router</br>Firewall · DHCP · DNS (NixOS)"]
+    Router --> enp8s0["enp8s0</br>WAN"]
+    enp8s0 --> ONT["ONT"]
+    ONT --> ISP["Internet / ISP"]
 
-    %% ── Links ────────────────────────────────────────────────
-    ISP -->|"10 G enp8s0"| Router
+    Router --> enp1s0["enp1s0 trunk</br>native → VLAN 50"]
+    enp1s0 --> SW1["Unmanaged Switch"]
+    SW1 -->|"Tagged 10/20/30/40"| WAPs["6× WAPs</br>SSIDs: VLAN 10 / 20 / 30 / 40"]
+    SW1 -->|"Untagged → VLAN 50"| Media["Media Devices</br>VLAN 50 / Untagged"]
+    SW1 -->|"Untagged (MAC → VLAN 51)"| HA["Home Assistant</br>Static 192.168.51.10"]
 
-    Router -->|"2.5 G enp1s0 (802.1Q trunk)<br/>VLANs 10 / 20 / 30 / 40 / 50 / 51"| WAPs
-    Router -->|"2.5 G enp1s0 (VLAN 50)"| Media
-    Router -->|"2.5 G enp1s0 (VLAN 51)"| HA
-    Router -->|"2.5 G enp2s0<br/>VLAN 60"| Cameras
-    Router -->|"10 G enp7s0"| HomeOffice
+    Router --> enp2s0["enp2s0</br>untagged → VLAN 60"]
+    enp2s0 --> SW2["Unmanaged Switch"]
+    SW2 -->|"Untagged → VLAN 60"| Cameras["Security Cameras</br>(Untagged)"]
+
+    Router --> enp7s0["enp7s0</br>VLAN 70"]
+    enp7s0 --> SW3["Unmanaged Switch or single host"]
+    SW3 --> HomeOffice["Home-Office / Mgmt Network</br>VLAN 70"]
 ```
 
 The network runs on an iKoolCore R2 Max right now, which has two 10G ports and two 2.5G ports. We break this out into multiple pieces, where most things are sharing the 2.5G ports, except for my office, which has the remaining full 10G port (since the other one is used for the actual ISP connection to prevent bottlenecking).
