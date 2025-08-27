@@ -12,10 +12,6 @@ let
   trunkVids = [ vl.iot vl.autom vl.guest vl.home vl.media vl.ha ];
   allVids = trunkVids ++ [ vl.cams vl.mgmt ];
 
-  trunkIfaces = map (v: "${hw.trunk.iface}.${toString v}") trunkVids;
-  allIfaces = trunkIfaces ++ [ "${hw.cameras.iface}.${toString vl.cams}" hw.mgmt.iface ];
-
-  mkAddr = vid: "${mkIP vid}.1";
   mkRange = vid: "${mkIP vid}.100,${mkIP vid}.199,255.255.255.0,12h";
 in {
   options.router.services.dnsmasq = {
@@ -42,9 +38,7 @@ in {
       enable = true;
       settings = {
         bind-dynamic    = true;
-        interface       = allIfaces;
-        listen-address  = map mkAddr allVids;
-        except-interface = hw.wan.iface;
+        except-interface = [ hw.wan.iface ];
         dhcp-range      = map mkRange allVids;
         dhcp-host       = map (l: "${l.mac},${l.ip},${l.hostname}") cfg.staticLeases;
         dhcp-authoritative = true;

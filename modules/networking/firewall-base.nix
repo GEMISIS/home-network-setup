@@ -4,30 +4,12 @@
 }:
 with lib; let
   cfg = config.router.networking.firewallBase;
-  mgmtIface = config.router.hw.mgmt.iface;
   vl = config.router.vlans;
   hw = config.router.hw;
   trunkVids = [ vl.iot vl.autom vl.guest vl.home vl.media vl.ha ];
   vlanIfaces =
     (map (v: "${hw.trunk.iface}.${toString v}") trunkVids)
-    ++ [ "${hw.cameras.iface}.${toString vl.cams}" mgmtIface ];
-
-  ifaceAttrs = listToAttrs (
-    map (
-      iface: {
-        name = iface;
-        value = {
-          allowedUDPPorts = [ 53 67 68 ];
-          allowedTCPPorts = [ 53 ] ++ optionals (iface == mgmtIface) [ 22 ];
-        };
-      }
-    ) vlanIfaces
-    ++ [
-      {
-        name = "lo";
-        value.allowedTCPPorts = [ 22 ];
-      }
-    ]);
+    ++ [ "${hw.cameras.iface}.${toString vl.cams}" hw.mgmt.iface ];
 in
 {
   options.router.networking.firewallBase.enable = mkOption {
@@ -45,7 +27,7 @@ in
     networking.firewall = {
       enable = true;
       rejectPackets = false;
-      interfaces = ifaceAttrs;
+      trustedInterfaces = vlanIfaces;
     };
   };
 }
