@@ -14,10 +14,7 @@ let
   allVids = trunkVids ++ [ vl.media vl.cams vl.mgmt ];
   allIfaces = map ifaceFor allVids;
 
-  mkRange = vid:
-    let
-      iface = ifaceFor vid;
-    in "interface:${iface},${mkNet vid}.100,${mkNet vid}.199,255.255.255.0,12h";
+  mkRange = vid: "${mkNet vid}.100,${mkNet vid}.199,255.255.255.0,12h";
 
   ifaceFor = vid:
     if elem vid trunkVids then "${hw.trunk.iface}.${toString vid}"
@@ -40,6 +37,8 @@ in {
           mac = mkOption { type = types.str; };
           ip = mkOption { type = types.str; };
           hostname = mkOption { type = types.str; };
+          tag = mkOption { type = types.nullOr types.str; default = null; };
+          vlan = mkOption { type = types.nullOr types.int; default = null; };
         };
       });
       default = [];
@@ -52,12 +51,15 @@ in {
       enable = true;
       settings = {
         interface       = allIfaces;
-        listen-address  = map mkGW allVids;
         bind-dynamic    = true;
         except-interface = [ hw.wan.iface ];
         dhcp-range      = map mkRange allVids;
-        dhcp-host       = map (l: "${l.mac},${l.ip},${l.hostname}") cfg.staticLeases;
+        dhcp-host       = map (l: "${l.mac}${optionalString (l.tag != null) ",set:${l.tag}"},${l.ip},${l.hostname}") cfg.staticLeases;
         dhcp-option     = (map mkRouterOpt allVids) ++ (map mkDnsOpt allVids);
+        dhcp-vlan       =
+          let
+            entries = map (l: if l.tag != null && l.vlan != null then "tag:${l.tag},${toString l.vlan}" else null) cfg.staticLeases;
+          in filter (v: v != null) entries;
         dhcp-authoritative = true;
       };
     };

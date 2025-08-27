@@ -74,6 +74,8 @@
         mac = "d8:3a:dd:b7:09:e2";
         ip = "192.168.51.10";
         hostname = "homeassistant";
+        tag = "ha";
+        vlan = 51;
       }
     ];
   };
