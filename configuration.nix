@@ -28,6 +28,7 @@
 
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelModules = [ "8021q" ];
 
   # Device basics
   networking.hostName = "McAlister-Home";
