@@ -12,15 +12,22 @@ with lib; let
     (map (v: "${hw.trunk.iface}.${toString v}") trunkVids)
     ++ [ "${hw.cameras.iface}.${toString vl.cams}" mgmtIface ];
 
-  ifaceAttrs = listToAttrs (map
-    (iface: {
-      name = iface;
-      value = {
-        allowedUDPPorts = [ 53 67 68 ];
-        allowedTCPPorts = [ 53 ];
-      };
-    })
-    vlanIfaces);
+  ifaceAttrs = listToAttrs (
+    map (
+      iface: {
+        name = iface;
+        value = {
+          allowedUDPPorts = [ 53 67 68 ];
+          allowedTCPPorts = [ 53 ] ++ optionals (iface == mgmtIface) [ 22 ];
+        };
+      }
+    ) vlanIfaces
+    ++ [
+      {
+        name = "lo";
+        value.allowedTCPPorts = [ 22 ];
+      }
+    ]);
 in
 {
   options.router.networking.firewallBase.enable = mkOption {
@@ -38,11 +45,7 @@ in
     networking.firewall = {
       enable = true;
       rejectPackets = false;
-      interfaces =
-        recursiveUpdate ifaceAttrs {
-          "${mgmtIface}".allowedTCPPorts = [ 22 53 ];
-          lo.allowedTCPPorts = [ 22 ];
-        };
+      interfaces = ifaceAttrs;
     };
   };
 }
