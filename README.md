@@ -3,7 +3,7 @@ This is a quick repository for how my home network is setup. It's designed to be
 
 ## Overview
 
-There's a full architecture document located in ARCH.md, but as a brief overview, the network is segmented into various VLANs, with some of these not having access to the internet for security purposes. The goal is to only give internet access where needed:
+There's a full architecture document located in ARCH.md, and detailed software flows in SOFTWARE.md, but as a brief overview, the network is segmented into various VLANs, with some of these not having access to the internet for security purposes. The goal is to only give internet access where needed:
 
 | VLAN | Purpose                       | Internet Access | Notes |
 |------|------------------------------|-----------------|-------|
