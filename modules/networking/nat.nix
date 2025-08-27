@@ -12,7 +12,7 @@ let
   trunkIfaces = map (v: "${hw.trunk.iface}.${toString v}") trunkVids;
 
   # Include the dedicated management interface as a NAT source as well
-  natInterfaces = trunkIfaces ++ [ hw.mgmt.iface ];
+  natInterfaces = trunkIfaces ++ [ hw.trunk.iface hw.mgmt.iface ];
 in {
   options.router.networking.nat = {
     enable = mkOption {

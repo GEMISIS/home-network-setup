@@ -9,7 +9,12 @@ with lib; let
   trunkVids = [ vl.iot vl.autom vl.guest vl.home vl.media vl.ha ];
   vlanIfaces =
     (map (v: "${hw.trunk.iface}.${toString v}") trunkVids)
-    ++ [ "${hw.cameras.iface}.${toString vl.cams}" hw.mgmt.iface ];
+    ++ [
+      hw.trunk.iface
+      hw.cameras.iface
+      "${hw.cameras.iface}.${toString vl.cams}"
+      hw.mgmt.iface
+    ];
 in
 {
   options.router.networking.firewallBase.enable = mkOption {
