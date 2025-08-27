@@ -33,6 +33,10 @@ in
       enable = true;
       rejectPackets = false;
       trustedInterfaces = vlanIfaces;
+      interfaces = genAttrs vlanIfaces (_: {
+        allowedUDPPorts = [ 53 67 68 ];
+        allowedTCPPorts = [ 53 ];
+      });
     };
   };
 }

@@ -12,6 +12,7 @@ let
 
   trunkVids = [ vl.iot vl.autom vl.guest vl.home vl.ha ];
   allVids = trunkVids ++ [ vl.media vl.cams vl.mgmt ];
+  allIfaces = map ifaceFor allVids;
 
   mkRange = vid:
     let
@@ -50,6 +51,8 @@ in {
     services.dnsmasq = {
       enable = true;
       settings = {
+        interface       = allIfaces;
+        listen-address  = map mkGW allVids;
         bind-dynamic    = true;
         except-interface = [ hw.wan.iface ];
         dhcp-range      = map mkRange allVids;
