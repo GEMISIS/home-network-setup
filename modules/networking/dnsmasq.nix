@@ -10,8 +10,8 @@ let
   mkNet = vid: "192.168.${toString vid}";
   mkGW = vid: "${mkNet vid}.1";
 
-  trunkVids = [ vl.iot vl.autom vl.guest vl.media vl.ha ];
-  allVids = trunkVids ++ [ vl.home vl.cams vl.mgmt ];
+  trunkVids = [ vl.iot vl.autom vl.guest vl.home vl.ha ];
+  allVids = trunkVids ++ [ vl.media vl.cams vl.mgmt ];
 
   mkRange = vid:
     let
@@ -20,7 +20,7 @@ let
 
   ifaceFor = vid:
     if elem vid trunkVids then "${hw.trunk.iface}.${toString vid}"
-    else if vid == vl.home then hw.trunk.iface
+    else if vid == vl.media then hw.trunk.iface
     else if vid == vl.cams then "${hw.cameras.iface}.${toString vl.cams}"
     else hw.mgmt.iface;
 

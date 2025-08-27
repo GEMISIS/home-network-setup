@@ -8,8 +8,8 @@ let
   hw = config.router.hw;
 
   # VLANs carried over the trunk interface that require NAT
-  trunkVids = [ vlans.iot vlans.guest vlans.home vlans.media vlans.ha ];
-  trunkIfaces = map (v: if v == vlans.home then hw.trunk.iface else "${hw.trunk.iface}.${toString v}") trunkVids;
+  trunkVids = [ vlans.iot vlans.guest vlans.home vlans.ha vlans.media ];
+  trunkIfaces = map (v: if v == vlans.media then hw.trunk.iface else "${hw.trunk.iface}.${toString v}") trunkVids;
 
   # Include the dedicated management interface as a NAT source as well
   natInterfaces = trunkIfaces ++ [ hw.mgmt.iface ];
