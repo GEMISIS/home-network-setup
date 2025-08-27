@@ -9,7 +9,7 @@ let
   trunk = hw.trunk.iface;
   mdnsPort = 5353;
 
-  allowedIfaces = map (v: "${trunk}.${toString v}") [ vlans.ha vlans.home vlans.media vlans.iot vlans.autom ];
+  allowedIfaces = map (v: if v == vlans.media then trunk else "${trunk}.${toString v}") [ vlans.ha vlans.home vlans.media vlans.iot vlans.autom ];
   firewallIfaces = genAttrs allowedIfaces (_: { allowedUDPPorts = [ mdnsPort ]; });
 in
 {

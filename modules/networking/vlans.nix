@@ -17,7 +17,8 @@ let
       prefixLength = toInt (elemAt parts 1);
     };
 
-  trunkVids  = [ vl.iot vl.autom vl.guest vl.home vl.media vl.ha ];
+  trunkVids  = [ vl.iot vl.autom vl.guest vl.home vl.ha ];
+  nativeVid  = vl.media;
   camerasVid = vl.cams;
   mgmtVid    = vl.mgmt;
 
@@ -37,7 +38,11 @@ let
   );
 
   ifaceAttrs = listToAttrs (
-    map
+    [
+      { name = hw.trunk.iface;   value = { ipv4.addresses = [ (mkIPv4 nativeVid) ]; useDHCP = false; }; }
+      { name = hw.cameras.iface; value = { useDHCP = false; }; }
+    ]
+    ++ map
       (vid:
         let
           ifName = "${hw.trunk.iface}.${toString vid}";
@@ -71,9 +76,25 @@ in
   config = mkIf cfg.enable {
     networking = {
       useNetworkd = true;
+      useDHCP = false;
+      networkmanager.enable = false;
+      dhcpcd.enable = false;
       vlans = vlanAttrs;
       interfaces = ifaceAttrs;
     };
+    systemd.network = {
+      enable = true;
+      wait-online = {
+        enable = true;
+        anyInterface = true;
+      };
+    };
+    assertions = [
+      {
+        assertion = config.router.services.dnsmasq.enable;
+        message = "dnsmasq must be enabled to provide DHCP on VLAN interfaces.";
+      }
+    ];
   };
 }
 

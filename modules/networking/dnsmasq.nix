@@ -9,19 +9,23 @@ let
 
   mkIP = vid: "192.168.${toString vid}";
 
-  trunkVids = [ vl.iot vl.autom vl.guest vl.home vl.media vl.ha ];
-  trunkIfaces = map (v: { iface = "${hw.trunk.iface}.${toString v}"; vid = v; }) trunkVids;
+  trunkVids = [ vl.iot vl.autom vl.guest vl.home vl.ha ];
+  allVids   = trunkVids ++ [ vl.media vl.cams vl.mgmt ];
 
-  vlanIfaces = trunkIfaces ++ [
-    { iface = "${hw.cameras.iface}.${toString vl.cams}"; vid = vl.cams; }
-    { iface = hw.mgmt.iface; vid = vl.mgmt; }
-  ];
+  ifaceFor = vid:
+    if elem vid trunkVids then "${hw.trunk.iface}.${toString vid}"
+    else if vid == vl.media then hw.trunk.iface
+    else if vid == vl.cams then "${hw.cameras.iface}.${toString vl.cams}"
+    else hw.mgmt.iface;
 
-  mkRange = e: "${e.iface},${mkIP e.vid}.100,${mkIP e.vid}.199,255.255.255.0,12h";
-  mkOptions = e: [
-    "${e.iface},option:router,${mkIP e.vid}.1"
-    "${e.iface},option:dns-server,${mkIP e.vid}.1"
-  ];
+  mkRange = vid:
+    let iface = ifaceFor vid; in "${iface},${mkIP vid}.100,${mkIP vid}.199,255.255.255.0,12h";
+
+  mkOptions = vid:
+    let gw = "${mkIP vid}.1"; iface = ifaceFor vid; in [
+      "${iface},option:router,${gw}"
+      "${iface},option:dns-server,${gw}"
+    ];
 in {
   options.router.services.dnsmasq = {
     enable = mkOption {
@@ -35,6 +39,8 @@ in {
           mac = mkOption { type = types.str; };
           ip = mkOption { type = types.str; };
           hostname = mkOption { type = types.str; };
+          tag = mkOption { type = types.nullOr types.str; default = null; };
+          vlan = mkOption { type = types.nullOr types.int; default = null; };
         };
       });
       default = [];
@@ -47,11 +53,25 @@ in {
       enable = true;
       settings = {
         bind-interfaces = true;
-        interface       = map (e: e.iface) vlanIfaces;
-        except-interface = hw.wan.iface;
-        dhcp-range      = map mkRange vlanIfaces;
-        dhcp-option     = concatMap mkOptions vlanIfaces;
-        dhcp-host       = map (l: "${l.mac},${l.ip},${l.hostname}") cfg.staticLeases;
+        interface       = map ifaceFor allVids;
+        except-interface = [ hw.wan.iface ];
+        dhcp-range      = map mkRange allVids;
+        dhcp-option     = concatMap mkOptions allVids;
+        dhcp-host       = map (l: "${l.mac}${optionalString (l.tag != null) ",set:${l.tag}"},${l.ip},${l.hostname}") cfg.staticLeases;
+        dhcp-vlan       =
+          let
+            entries = map (l: if l.tag != null && l.vlan != null then "tag:${l.tag},${toString l.vlan}" else null) cfg.staticLeases;
+          in filter (v: v != null) entries;
+        dhcp-authoritative = true;
+      };
+    };
+    systemd.services.dnsmasq = {
+      wantedBy = [ "multi-user.target" ];
+      after    = [ "network-online.target" ];
+      wants    = [ "network-online.target" ];
+      serviceConfig = {
+        Restart = "on-failure";
+        RestartSec = 2;
       };
     };
   };
