@@ -7,12 +7,23 @@ let
   vl  = config.router.vlans;
   hw  = config.router.hw;
 
-  mkIP = vid: "192.168.${toString vid}";
+  mkNet = vid: "192.168.${toString vid}";
+  mkGW = vid: "${mkNet vid}.1";
 
   trunkVids = [ vl.iot vl.autom vl.guest vl.home vl.media vl.ha ];
   allVids = trunkVids ++ [ vl.cams vl.mgmt ];
 
-  mkRange = vid: "${mkIP vid}.100,${mkIP vid}.199,255.255.255.0,12h";
+  mkRange = vid: "${mkNet vid}.100,${mkNet vid}.199,255.255.255.0,12h";
+
+  ifaceFor = vid:
+    if elem vid trunkVids then "${hw.trunk.iface}.${toString vid}"
+    else if vid == vl.cams then "${hw.cameras.iface}.${toString vl.cams}"
+    else hw.mgmt.iface;
+
+  allIfaces = map ifaceFor allVids;
+  allAddrs = map mkGW allVids;
+  mkRouterOpt = vid: "interface:${ifaceFor vid},option:router,${mkGW vid}";
+  mkDnsOpt    = vid: "interface:${ifaceFor vid},option:dns-server,${mkGW vid}";
 in {
   options.router.services.dnsmasq = {
     enable = mkOption {
@@ -37,10 +48,12 @@ in {
     services.dnsmasq = {
       enable = true;
       settings = {
-        bind-dynamic    = true;
-        except-interface = [ hw.wan.iface ];
-        dhcp-range      = map mkRange allVids;
-        dhcp-host       = map (l: "${l.mac},${l.ip},${l.hostname}") cfg.staticLeases;
+        bind-dynamic  = true;
+        interface     = allIfaces;
+        listen-address = allAddrs;
+        dhcp-range    = map mkRange allVids;
+        dhcp-host     = map (l: "${l.mac},${l.ip},${l.hostname}") cfg.staticLeases;
+        dhcp-option   = (map mkRouterOpt allVids) ++ (map mkDnsOpt allVids);
         dhcp-authoritative = true;
       };
     };
