@@ -7,13 +7,10 @@ let
   vl  = config.router.vlans;
   hw  = config.router.hw;
 
-  mkNet = vid: "192.168.${toString vid}";
-  mkGW = vid: "${mkNet vid}.1";
+  mkIP = vid: "192.168.${toString vid}";
 
   trunkVids = [ vl.iot vl.autom vl.guest vl.home vl.ha ];
-  allVids = trunkVids ++ [ vl.media vl.cams vl.mgmt ];
-
-  mkRange = vid: "${mkNet vid}.100,${mkNet vid}.199,255.255.255.0,12h";
+  allVids   = trunkVids ++ [ vl.media vl.cams vl.mgmt ];
 
   ifaceFor = vid:
     if elem vid trunkVids then "${hw.trunk.iface}.${toString vid}"
@@ -21,8 +18,14 @@ let
     else if vid == vl.cams then "${hw.cameras.iface}.${toString vl.cams}"
     else hw.mgmt.iface;
 
-  mkRouterOpt = vid: "interface:${ifaceFor vid},option:router,${mkGW vid}";
-  mkDnsOpt    = vid: "interface:${ifaceFor vid},option:dns-server,${mkGW vid}";
+  mkRange = vid:
+    let iface = ifaceFor vid; in "${iface},${mkIP vid}.100,${mkIP vid}.199,255.255.255.0,12h";
+
+  mkOptions = vid:
+    let gw = "${mkIP vid}.1"; iface = ifaceFor vid; in [
+      "${iface},option:router,${gw}"
+      "${iface},option:dns-server,${gw}"
+    ];
 in {
   options.router.services.dnsmasq = {
     enable = mkOption {
@@ -49,11 +52,12 @@ in {
     services.dnsmasq = {
       enable = true;
       settings = {
-        bind-dynamic    = true;
+        bind-interfaces = true;
+        interface       = map ifaceFor allVids;
         except-interface = [ hw.wan.iface ];
         dhcp-range      = map mkRange allVids;
+        dhcp-option     = concatMap mkOptions allVids;
         dhcp-host       = map (l: "${l.mac}${optionalString (l.tag != null) ",set:${l.tag}"},${l.ip},${l.hostname}") cfg.staticLeases;
-        dhcp-option     = (map mkRouterOpt allVids) ++ (map mkDnsOpt allVids);
         dhcp-vlan       =
           let
             entries = map (l: if l.tag != null && l.vlan != null then "tag:${l.tag},${toString l.vlan}" else null) cfg.staticLeases;
