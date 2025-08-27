@@ -12,7 +12,6 @@ let
 
   trunkVids = [ vl.iot vl.autom vl.guest vl.home vl.ha ];
   allVids = trunkVids ++ [ vl.media vl.cams vl.mgmt ];
-  allIfaces = map ifaceFor allVids;
 
   mkRange = vid: "${mkNet vid}.100,${mkNet vid}.199,255.255.255.0,12h";
 
@@ -50,7 +49,6 @@ in {
     services.dnsmasq = {
       enable = true;
       settings = {
-        interface       = allIfaces;
         bind-dynamic    = true;
         except-interface = [ hw.wan.iface ];
         dhcp-range      = map mkRange allVids;
@@ -63,9 +61,14 @@ in {
         dhcp-authoritative = true;
       };
     };
-    systemd.services.dnsmasq.serviceConfig = {
-      Restart = "on-failure";
-      RestartSec = 2;
+    systemd.services.dnsmasq = {
+      wantedBy = [ "multi-user.target" ];
+      after    = [ "network-online.target" ];
+      wants    = [ "network-online.target" ];
+      serviceConfig = {
+        Restart = "on-failure";
+        RestartSec = 2;
+      };
     };
   };
 }
