@@ -11,10 +11,14 @@ with lib; let
   vlanIfaces =
     (map (v: "${hw.trunk.iface}.${toString v}") trunkVids)
     ++ [ "${hw.cameras.iface}.${toString vl.cams}" mgmtIface ];
-  udpIfaceAttrs = listToAttrs (map
+
+  ifaceAttrs = listToAttrs (map
     (iface: {
       name = iface;
-      value = { allowedUDPPorts = [ 67 68 ]; };
+      value = {
+        allowedUDPPorts = [ 53 67 68 ];
+        allowedTCPPorts = [ 53 ];
+      };
     })
     vlanIfaces);
 in
@@ -35,9 +39,8 @@ in
       enable = true;
       rejectPackets = false;
       interfaces =
-        udpIfaceAttrs
-        // {
-          "${mgmtIface}".allowedTCPPorts = [ 22 ];
+        recursiveUpdate ifaceAttrs {
+          "${mgmtIface}".allowedTCPPorts = [ 22 53 ];
           lo.allowedTCPPorts = [ 22 ];
         };
     };
