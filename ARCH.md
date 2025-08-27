@@ -1,4 +1,4 @@
-# Home Network Router & VLAN Architecture - Design Document <!-- omit in toc -->
+| Endpoint pools | • Media (VLAN 50)  <br>• Home Assistant (VLAN 51, static IP, MAC-mapped) | Reach router through the `enp1s0` switch; untagged devices land in VLAN 50. || Camera segment | PoE switch (optional) | Unmanaged switch on `enp2s0`; untagged camera traffic mapped to VLAN 60. |# Home Network Router & VLAN Architecture - Design Document <!-- omit in toc -->
 
 ## Table of Contents
 1. [Overview](#overview)
@@ -19,11 +19,11 @@ You are building a single-box Linux router (running **NixOS**, see [OS options](
 | 30   | Guest network                | ✔︎              | Wi‑Fi SSID #3 |
 | 40   | Home‑user devices            | ✔︎              | Wi‑Fi SSID #4 |
 | 50   | Media (Apple TV, consoles)   | ✔︎              | Wired only |
-| 51   | Home‑Assistant               | ✔︎              | Wired only · **Static IP 192.168.51.10** (MAC `d8:3a:dd:b7:09:e2`) |
-| 60   | Security cameras             | ✖︎              | Wired, dedicated NIC (**tagged**) |
+| 51   | Home‑Assistant               | ✔︎              | Untagged · **Static IP 192.168.51.10** (MAC `d8:3a:dd:b7:09:e2` → VLAN 51) |
+| 60   | Security cameras             | ✖︎              | Untagged on dedicated NIC (mapped to VLAN 60) |
 | 70   | Home‑office / Management     | ✔︎ (admin-only) | Private 10 G link |
 
-Access points now connect directly to the router and tag VLANs for wireless clients. Small unmanaged switches sit between each router interface and its devices (except the WAN `enp8s0`), so wired endpoints such as media players and Home Assistant use these switches for VLAN‑tagged links. The `enp1s0` trunk treats any untagged frame as VLAN 50 by default.
+Access points now connect directly to the router and tag VLANs for wireless clients. Small unmanaged switches sit between each router interface and its devices (except the WAN `enp8s0`); untagged wired endpoints hit these switches, and the router assigns VLANs per MAC address. Frames default to VLAN 50, while the Home Assistant MAC maps to VLAN 51 and cameras on `enp2s0` map to VLAN 60.
 
 ```mermaid
 flowchart LR
@@ -33,11 +33,11 @@ flowchart LR
     enp1s0 --> SW1["Unmanaged Switch"]
     SW1 -->|"Tagged 10/20/30/40"| WAPs["6× WAPs\nSSIDs: VLAN 10 / 20 / 30 / 40"]
     SW1 -->|"Untagged → VLAN 50"| Media["Media Devices\nVLAN 50 / Untagged"]
-    SW1 -->|"VLAN 51"| HA["Home Assistant\nStatic 192.168.51.10"]
+    SW1 -->|"Untagged (MAC → VLAN 51)"| HA["Home Assistant\nStatic 192.168.51.10"]
 
-    Router -->|"2.5 G"| enp2s0["enp2s0\nVLAN 60 only"]
+    Router -->|"2.5 G"| enp2s0["enp2s0\nuntagged → VLAN 60"]
     enp2s0 --> SW2["Unmanaged Switch"]
-    SW2 -->|"VLAN 60"| Cameras["Security Cameras\n(tagged)"]
+    SW2 -->|"Untagged → VLAN 60"| Cameras["Security Cameras\n(Untagged)"]
 
     Router -->|"10 G"| enp7s0["enp7s0\nVLAN 70"]
     enp7s0 --> SW3["Unmanaged Switch or single host"]
@@ -53,15 +53,15 @@ flowchart LR
 | ISP edge | **GPON/Active‑E ONT** | Converts fiber to 10 GbE copper (RJ‑45) hand‑off. |
 | Router | Desktop PC | 4 × NICs (2 × 10 G, 2 × 2.5 G); runs **NixOS**. |
 | WAPs (×6) | Wi‑Fi 6/6E APs | Connected via unmanaged switch on `enp1s0`; broadcast 4 SSIDs (VLAN 10/20/30/40). |
-| Camera segment | PoE switch (optional) | Unmanaged switch on `enp2s0`, uplink **tagged VLAN 60** only. |
+| Camera segment | PoE switch (optional) | Unmanaged switch on `enp2s0`; untagged camera traffic mapped to VLAN 60. |
 | Home‑office link | 10 G DAC / RJ‑45 | `enp7s0` to unmanaged switch or single device (VLAN 70). |
-| Endpoint pools | • Media (VLAN 50)  <br>• Home Assistant (VLAN 51, static IP) | Reach router through the `enp1s0` switch; untagged devices land in VLAN 50. |
+| Endpoint pools | • Media (VLAN 50)  <br>• Home Assistant (VLAN 51, static IP, MAC-mapped) | Reach router through the `enp1s0` switch; untagged devices land in VLAN 50. |
 
 **Interface role map:**
 - **enp8s0** — 10 G WAN uplink (DHCP; single public IP)
 - **enp7s0** — 10 G management/office (VLAN 70) via unmanaged switch or direct host
-- **enp1s0** — 2.5 G trunk via unmanaged switch; untagged frames → VLAN 50 (VLANs 10/20/30/40/50/51)
-- **enp2s0** — 2.5 G trunk via unmanaged PoE switch for cameras (VLAN 60 **tagged**)
+- **enp1s0** — 2.5 G trunk via unmanaged switch; untagged frames → VLAN 50 (Home Assistant MAC → VLAN 51)
+- **enp2s0** — 2.5 G link via unmanaged PoE switch; untagged frames → VLAN 60
 
 ---
 
