@@ -30,15 +30,15 @@ flowchart LR
 
     %% Networks
     subgraph DHCPVLANs["DHCP VLANs"]
-        IoT["IoT\nVLAN 10"]
-        Auto["Automation\nVLAN 20"]
-        Guest["Guest\nVLAN 30"]
-        Family["Family\nVLAN 40"]
-        Media["Media\nVLAN 50"]
-        Cameras["Cameras\nVLAN 60\n(untagged)"]
-        Mgmt["Mgmt PCs\nVLAN 70"]
+        IoT["IoT</br>VLAN 10"]
+        Auto["Automation</br>VLAN 20"]
+        Guest["Guest</br>VLAN 30"]
+        Family["Family</br>VLAN 40"]
+        Media["Media</br>VLAN 50"]
+        Cameras["Cameras</br>VLAN 60</br>(untagged)"]
+        Mgmt["Mgmt PCs</br>VLAN 70"]
     end
-    HA["Home Assistant\nVLAN 51\nstatic IP\n(untagged, MAC-mapped)"]
+    HA["Home Assistant</br>VLAN 51</br>static IP</br>(untagged, MAC-mapped)"]
 
     ISP["ISP / Internet"]
 
@@ -49,7 +49,12 @@ flowchart LR
     HA -->|"Firewall rules"| NF
     NF -->|"NAT & filtering"| ISP
     WG -->|"Remote access"| Mgmt
-    PR -->|"Logs"| LK
+    NF -->|"logs"| PR
+    DM -->|"logs"| PR
+    WG -->|"logs"| PR
+    CS -->|"logs"| PR
+    PR -->|"push"| LK
+    Mgmt -->|"HTTP"| LK
     CS -->|"Blocks"| NF
 ```
 
@@ -118,10 +123,10 @@ Home Assistant uses a fixed address but still traverses nftables for policy enfo
 
 ```mermaid
 flowchart LR
-    AdminPC["Admin PC<br/>VLAN 70"]
-    FamilyPC["Family Device<br/>VLAN 40"]
-    HA["Home Assistant<br/>VLAN 51"]
-    WGUser["Remote Admin<br/>WireGuard"]
+    AdminPC["Admin PC</br>VLAN 70"]
+    FamilyPC["Family Device</br>VLAN 40"]
+    HA["Home Assistant</br>VLAN 51"]
+    WGUser["Remote Admin</br>WireGuard"]
     Others["Other VLANs"]
     subgraph RouterBox["Router"]
         Router["SSH / HTTPS"]
@@ -134,6 +139,8 @@ flowchart LR
     HA -.-|"blocked"| Router
     Others -.-|"blocked"| Router
     Router -- "logs via Promtail" --> Loki
+    AdminPC -->|"HTTP"| Loki
+    WGUser -->|"HTTP"| Loki
 ```
 
 Only devices in VLAN 40 and VLAN 70 (or over WireGuard) may SSH into the router; nftables blocks all other VLANs.
@@ -143,12 +150,12 @@ Only devices in VLAN 40 and VLAN 70 (or over WireGuard) may SSH into the rou
 ```mermaid
 flowchart LR
     subgraph Switch[Unmanaged Switch]
-        HA["Home Assistant\n(untagged)"]
-        Cam["Camera\n(untagged)"]
-        Media["Media Player\n(untagged)"]
+        HA["Home Assistant</br>(untagged)"]
+        Cam["Camera</br>(untagged)"]
+        Media["Media Player</br>(untagged)"]
         Tagged["Tagged Device"]
     end
-    Router["Router trunk port\nnative → VLAN 50\nMAC rules for HA & cameras"]
+    Router["Router trunk port</br>native → VLAN 50</br>MAC rules for HA & cameras"]
 
     HA -->|"Untagged"| Switch -->|"MAC → VLAN 51"| Router
     Cam -->|"Untagged"| Switch -->|"MAC/port → VLAN 60"| Router

@@ -27,21 +27,24 @@ Access points now connect directly to the router and tag VLANs for wireless clie
 
 ```mermaid
 flowchart LR
-    ISP["Internet / ISP"] -->|"10 G enp8s0"| Router["Linux Router<br/>Firewall · DHCP · DNS (NixOS)"]
+    Router["Linux Router</br>Firewall · DHCP · DNS (NixOS)"]
+    Router --> enp8s0["enp8s0</br>WAN"]
+    enp8s0 --> ONT["ONT"]
+    ONT --> ISP["Internet / ISP"]
 
-    Router -->|"2.5 G"| enp1s0["enp1s0 trunk\nnative → VLAN 50"]
+    Router --> enp1s0["enp1s0 trunk</br>native → VLAN 50"]
     enp1s0 --> SW1["Unmanaged Switch"]
-    SW1 -->|"Tagged 10/20/30/40"| WAPs["6× WAPs\nSSIDs: VLAN 10 / 20 / 30 / 40"]
-    SW1 -->|"Untagged → VLAN 50"| Media["Media Devices\nVLAN 50 / Untagged"]
-    SW1 -->|"Untagged (MAC → VLAN 51)"| HA["Home Assistant\nStatic 192.168.51.10"]
+    SW1 -->|"Tagged 10/20/30/40"| WAPs["6× WAPs</br>SSIDs: VLAN 10 / 20 / 30 / 40"]
+    SW1 -->|"Untagged → VLAN 50"| Media["Media Devices</br>VLAN 50 / Untagged"]
+    SW1 -->|"Untagged (MAC → VLAN 51)"| HA["Home Assistant</br>Static 192.168.51.10"]
 
-    Router -->|"2.5 G"| enp2s0["enp2s0\nuntagged → VLAN 60"]
+    Router --> enp2s0["enp2s0</br>untagged → VLAN 60"]
     enp2s0 --> SW2["Unmanaged Switch"]
-    SW2 -->|"Untagged → VLAN 60"| Cameras["Security Cameras\n(Untagged)"]
+    SW2 -->|"Untagged → VLAN 60"| Cameras["Security Cameras</br>(Untagged)"]
 
-    Router -->|"10 G"| enp7s0["enp7s0\nVLAN 70"]
+    Router --> enp7s0["enp7s0</br>VLAN 70"]
     enp7s0 --> SW3["Unmanaged Switch or single host"]
-    SW3 --> HomeOffice["Home‑Office / Mgmt devices\nVLAN 70"]
+    SW3 --> HomeOffice["Home‑Office / Mgmt devices</br>VLAN 70"]
 ```
 
 ---
