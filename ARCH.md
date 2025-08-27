@@ -23,27 +23,33 @@ You are building a single-box Linux router (running **NixOS**, see [OS options](
 | 60   | Security cameras             | ✖︎              | Wired, dedicated NIC (**tagged**) |
 | 70   | Home‑office / Management     | ✔︎ (admin-only) | Private 10 G link |
 
-Access points now connect directly to the router and tag VLANs for wireless clients. Wired endpoints such as media players and Home Assistant use VLAN‑tagged links without a core switch.
+Access points now connect directly to the router and tag VLANs for wireless clients. Small unmanaged switches sit between each router interface and its devices (except the WAN `enp8s0`), so wired endpoints such as media players and Home Assistant use these switches for VLAN‑tagged links. The `enp1s0` trunk treats any untagged frame as VLAN 50 by default.
 
 ```mermaid
 flowchart LR
     %% ── Nodes ────────────────────────────────────────────────
     ISP["Internet / ISP"]
     Router["Linux Router<br/>Firewall · DHCP · DNS (NixOS)"]
+    SW1["Unmanaged Switch<br/>enp1s0 trunk<br/>native → VLAN 50"]
+    SW2["Unmanaged Switch<br/>enp2s0 VLAN 60"]
+    SW3["Unmanaged Switch or single host<br/>enp7s0 VLAN 70"]
     WAPs["6× WAPs<br/>SSIDs: VLAN 10 / 20 / 30 / 40"]
-    Media["Media Devices<br/>VLAN 50"]
+    Media["Media Devices<br/>VLAN 50 / Untagged"]
     HA["Home Assistant<br/>VLAN 51 (Static: 192.168.51.10)"]
     Cameras["Security Cameras<br/>VLAN 60 (tagged)"]
-    HomeOffice["Home‑Office / Mgmt Network<br/>VLAN 70<br/>10 G enp7s0"]
+    HomeOffice["Home‑Office / Mgmt devices<br/>VLAN 70"]
 
     %% ── Links (corrected NIC mapping) ────────────────────────
     ISP -->|"10 G enp8s0 (WAN · DHCP · single public IP)"| Router
 
-    Router -->|"2.5 G enp1s0 (802.1Q trunk)<br/>VLANs 10 / 20 / 30 / 40 / 50 / 51"| WAPs
-    Router -->|"2.5 G enp1s0 (VLAN 50)"| Media
-    Router -->|"2.5 G enp1s0 (VLAN 51)"| HA
-    Router -->|"2.5 G enp2s0 (802.1Q trunk)<br/>VLAN 60 (tagged)"| Cameras
-    Router -->|"10 G enp7s0 (access)<br/>VLAN 70"| HomeOffice
+    Router -->|"2.5 G enp1s0 trunk"| SW1
+    SW1 -->|"Tagged VLANs 10 / 20 / 30 / 40"| WAPs
+    SW1 -->|"Untagged → VLAN 50"| Media
+    SW1 -->|"VLAN 51"| HA
+    Router -->|"2.5 G enp2s0"| SW2
+    SW2 -->|"VLAN 60"| Cameras
+    Router -->|"10 G enp7s0"| SW3
+    SW3 --> HomeOffice
 ```
 
 ---
@@ -54,16 +60,16 @@ flowchart LR
 |-------|-----------------|------------------|
 | ISP edge | **GPON/Active‑E ONT** | Converts fiber to 10 GbE copper (RJ‑45) hand‑off. |
 | Router | Desktop PC | 4 × NICs (2 × 10 G, 2 × 2.5 G); runs **NixOS**. |
-| WAPs (×6) | Wi‑Fi 6/6E APs | Direct 802.1Q trunk to router; broadcast 4 SSIDs (VLAN 10/20/30/40). |
-| Camera segment | PoE switch (optional) | Uplink **tagged VLAN 60** only. |
-| Home‑office link | Direct 10 G DAC / RJ‑45 | VLAN 70; management PC or small switch. |
-| Endpoint pools | • Media (VLAN 50)  <br>• Home Assistant (VLAN 51, static IP) | VLAN‑tagged connections directly to router. |
+| WAPs (×6) | Wi‑Fi 6/6E APs | Connected via unmanaged switch on `enp1s0`; broadcast 4 SSIDs (VLAN 10/20/30/40). |
+| Camera segment | PoE switch (optional) | Unmanaged switch on `enp2s0`, uplink **tagged VLAN 60** only. |
+| Home‑office link | 10 G DAC / RJ‑45 | `enp7s0` to unmanaged switch or single device (VLAN 70). |
+| Endpoint pools | • Media (VLAN 50)  <br>• Home Assistant (VLAN 51, static IP) | Reach router through the `enp1s0` switch; untagged devices land in VLAN 50. |
 
 **Interface role map:**
 - **enp8s0** — 10 G WAN uplink (DHCP; single public IP)
-- **enp7s0** — 10 G management/office (VLAN 70 access)
-- **enp1s0** — 2.5 G trunk to WAPs and VLAN-tagged devices (VLANs 10/20/30/40/50/51)
-- **enp2s0** — 2.5 G trunk for cameras (VLAN 60 **tagged**)
+- **enp7s0** — 10 G management/office (VLAN 70) via unmanaged switch or direct host
+- **enp1s0** — 2.5 G trunk via unmanaged switch; untagged frames → VLAN 50 (VLANs 10/20/30/40/50/51)
+- **enp2s0** — 2.5 G trunk via unmanaged PoE switch for cameras (VLAN 60 **tagged**)
 
 ---
 
@@ -143,7 +149,7 @@ Recommendations:
 |---|---------|-----------------------|
 | **1** | **Default‑deny firewall** | Default drop all inter‑VLAN; allow only explicit flows. NAT only for VLANs 10 / 30 / 40 / 50 / 51 / 70. |
 | **2** | **Camera VLAN isolation** | Explicit `reject` for `192.168.60.0/24 -> WAN`. Cameras cannot reach other VLANs. |
-| **3** | **Admin plane isolation** | SSH/HTTPS bound only to `192.168.70.1` and WireGuard `wg0`. VLAN 70 = admin‑only. |
+| **3** | **Admin plane isolation** | SSH/HTTPS bound only to router IPs in VLAN 70 and VLAN 40 (family); nftables blocks other VLANs. |
 | **4** | **Timely patching** | Daily `nixos‑upgrade` timer or nightly flake rebuild. |
 | **5** | **Central logging** | Promtail → Loki in VLAN 70. Loki access restricted to mgmt only. |
 | **6** | **Intrusion prevention** | CrowdSec + nftables bouncer. |

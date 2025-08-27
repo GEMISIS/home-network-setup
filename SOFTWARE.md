@@ -26,18 +26,33 @@ flowchart LR
         CS["CrowdSec"]
     end
     ISP["ISP / Internet"]
-    WAPs["Wi‑Fi APs<br/>VLANs 10/20/30/40"]
-    Media["Media Devices<br/>VLAN 50"]
-    HA["Home Assistant<br/>VLAN 51"]
-    Cameras["Security Cameras<br/>VLAN 60"]
-    Mgmt["Mgmt PCs<br/>VLAN 70"]
+    IoT["IoT Devices<br/>VLAN 10"]
+    Auto["Automation<br/>VLAN 20"]
+    Guest["Guest Devices<br/>VLAN 30"]
+    Family["Family Devices<br/>VLAN 40"]
+    Media["Media Devices<br/>VLAN 50 / Untagged"]
+    HA["Home Assistant<br/>VLAN 51"]
+    Cameras["Security Cameras<br/>VLAN 60"]
+    Mgmt["Mgmt PCs<br/>VLAN 70"]
 
     ISP -->|"enp8s0"| Router
-    Router -->|"enp1s0 trunk"| WAPs
-    Router -->|"enp1s0 VLAN50"| Media
-    Router -->|"enp1s0 VLAN51"| HA
-    Router -->|"enp2s0 VLAN60"| Cameras
-    Router -->|"enp7s0 VLAN70"| Mgmt
+    IoT -->|"enp1s0.10"| Router
+    Auto -->|"enp1s0.20"| Router
+    Guest -->|"enp1s0.30"| Router
+    Family -->|"enp1s0.40"| Router
+    Media -->|"enp1s0.50"| Router
+    HA -->|"enp1s0.51"| Router
+    Cameras -->|"enp2s0.60"| Router
+    Mgmt -->|"enp7s0.70"| Router
+
+    IoT --> DM
+    Auto --> DM
+    Guest --> DM
+    Family --> DM
+    Media --> DM
+    HA --> DM
+    Cameras --> DM
+    Mgmt --> DM
 
     NF -.policies/.-> Router
     DM -.DHCP/DNS.- Router
@@ -62,12 +77,15 @@ flowchart TD
 ### enp1s0 – Trunk to APs & Tagged Devices (VLANs 10/20/30/40/50/51)
 ```mermaid
 flowchart TD
-    A[Client sends tagged frame] --> B[Router sub‑interface enp1s0.<VLAN>]
-    B --> C[dnsmasq provides IP for VLAN]
-    C --> D[nftables evaluates policy]
-    D --> E{Internet allowed?}
-    E -- yes --> F[NAT via enp8s0]
-    E -- no --> G[Local VLAN only]
+    A[Client sends frame] --> B{Tagged?}
+    B -- yes --> C[Use existing VLAN]
+    B -- no --> D[Assign VLAN 50]
+    C --> E[dnsmasq provides IP for VLAN]
+    D --> E
+    E --> F[nftables evaluates policy]
+    F --> G{Internet allowed?}
+    G -- yes --> H[NAT via enp8s0]
+    G -- no --> I[Local VLAN only]
 ```
 
 ### enp2s0 – Camera Trunk (VLAN 60)
@@ -85,24 +103,30 @@ flowchart TD
     A[Mgmt device connects] --> B[enp7s0.70]
     B --> C[dnsmasq issues 192.168.70.x]
     C --> D[nftables allows admin services]
-    D --> E{Internet needed?}
-    E -- yes --> F[NAT via enp8s0]
-    E -- no --> G[Local mgmt only]
+    D --> E[NAT via enp8s0]
 ```
+
+The management VLAN always has internet access through NAT while still reaching administrative services on the router.
 
 ## Management Access
 
 ```mermaid
 flowchart LR
     AdminPC["Admin PC<br/>VLAN 70"]
+    FamilyPC["Family Device<br/>VLAN 40"]
     WGUser["Remote Admin<br/>WireGuard"]
     Router["Router<br/>SSH / HTTPS"]
     Loki["Loki<br/>Log store"]
+    Others["Other VLANs"]
 
     WGUser -->|"WireGuard"| Router
     AdminPC -->|"Direct 10 G"| Router
+    FamilyPC -->|"SSH"| Router
+    Others -.-|"blocked"| Router
     Router --> Loki
 ```
+
+Only devices in VLAN 40 and VLAN 70 (or over WireGuard) may SSH into the router; nftables blocks all other VLANs.
 
 ## Unmanaged Switch Behaviour
 
@@ -112,13 +136,13 @@ flowchart LR
         Device1[Tagged Device]
         Device2[Untagged Device]
     end
-    Router["Router trunk port"]
+    Router["Router trunk port<br/>default → VLAN 50"]
 
     Device1 -->|"Tagged VLAN"| Switch -->|"Preserves tags"| Router
-    Device2 -->|"Untagged"| Switch -->|"No native VLAN → frame dropped"| Router
+    Device2 -->|"Untagged"| Switch -->|"Assigned VLAN 50"| Router
 ```
 
-*Devices must tag their own VLANs when attached through an unmanaged switch. Untagged traffic is discarded because trunk ports use no native VLAN (4095).* 
+*Each router interface except the WAN uplink uses an unmanaged switch; `enp7s0` may connect directly to a single host.*
 
 ---
 
