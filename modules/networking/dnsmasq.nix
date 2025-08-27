@@ -58,10 +58,6 @@ in {
         dhcp-authoritative = true;
       };
     };
-    systemd.services.dnsmasq = {
-      wants = [ "network-online.target" ];
-      after = [ "network-online.target" ];
-    };
   };
 }
 
