@@ -29,18 +29,12 @@ let
         value = { interface = hw.trunk.iface; id = vid; };
       })
       trunkVids
-    ++ [
-      {
-        name = "${hw.cameras.iface}.${toString camerasVid}";
-        value = { interface = hw.cameras.iface; id = camerasVid; };
-      }
-    ]
   );
 
   ifaceAttrs = listToAttrs (
     [
       { name = hw.trunk.iface;   value = { ipv4.addresses = [ (mkIPv4 nativeVid) ]; useDHCP = false; }; }
-      { name = hw.cameras.iface; value = { useDHCP = false; }; }
+      { name = hw.cameras.iface; value = { ipv4.addresses = [ (mkIPv4 camerasVid) ]; useDHCP = false; }; }
     ]
     ++ map
       (vid:
@@ -53,12 +47,6 @@ let
       )
       trunkVids
     ++ [
-        (let
-          ifName = "${hw.cameras.iface}.${toString camerasVid}";
-        in {
-          name = ifName;
-          value = { ipv4.addresses = [ (mkIPv4 camerasVid) ]; useDHCP = false; };
-        })
         {
           name = hw.mgmt.iface;
           value = { ipv4.addresses = [ (mkIPv4 mgmtVid) ]; useDHCP = false; };

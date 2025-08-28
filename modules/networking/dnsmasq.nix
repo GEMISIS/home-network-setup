@@ -15,7 +15,7 @@ let
   ifaceFor = vid:
     if elem vid trunkVids then "${hw.trunk.iface}.${toString vid}"
     else if vid == vl.media then hw.trunk.iface
-    else if vid == vl.cams then "${hw.cameras.iface}.${toString vl.cams}"
+    else if vid == vl.cams then hw.cameras.iface
     else hw.mgmt.iface;
 
   mkRange = vid:

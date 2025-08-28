@@ -45,7 +45,7 @@ in {
     }
     {
       assertion = cfg.vlans.cams == 60;
-      message = "Cameras use VLAN 60 tagged; no untagged IP on the camera interface.";
+      message = "Cameras network must remain on VLAN 60.";
     }
   ];
 }

@@ -12,7 +12,6 @@ with lib; let
     ++ [
       hw.trunk.iface
       hw.cameras.iface
-      "${hw.cameras.iface}.${toString vl.cams}"
       hw.mgmt.iface
     ];
   homeIface = "${hw.trunk.iface}.${toString vl.home}";

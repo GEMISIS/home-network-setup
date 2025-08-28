@@ -5,11 +5,18 @@ with lib;
 let
   cfg = config.router.networking.policies;
   vlans = config.router.vlans;
-  wan  = config.router.hw.wan.iface;
+  hw   = config.router.hw;
+  wan  = hw.wan.iface;
 
-  vlanName = v: "vlan${toString v}";
+  trunkVids = [ vlans.iot vlans.autom vlans.guest vlans.home vlans.ha ];
+  ifaceFor = vid:
+    if elem vid trunkVids then "${hw.trunk.iface}.${toString vid}"
+    else if vid == vlans.media then hw.trunk.iface
+    else if vid == vlans.cams then hw.cameras.iface
+    else hw.mgmt.iface;
+
   mkSet = lst: "{ " + concatStringsSep ", " (map toString lst) + " }";
-  internalIfaces = map vlanName [
+  internalIfaces = map ifaceFor [
     vlans.iot vlans.autom vlans.guest vlans.home
     vlans.media vlans.ha vlans.cams vlans.mgmt
   ];
@@ -17,7 +24,7 @@ let
   rfc1918Addrs = "{ 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 }";
   chromecastTcp = "{ 1900, 8008, 8009, 8443 }";
   chromecastUdp = "{ 1900, 5353 }";
-  chromecastIfaces = "{ \"${vlanName vlans.home}\", \"${vlanName vlans.media}\" }";
+  chromecastIfaces = "{ \"${ifaceFor vlans.home}\", \"${ifaceFor vlans.media}\" }";
 
 in {
   options.router.networking.policies = {
@@ -50,33 +57,33 @@ in {
   config = mkIf cfg.enable {
     networking.firewall.extraForwardRules = ''
       # Home Assistant to Automation VLAN
-      iifname "${vlanName vlans.ha}" oifname "${vlanName vlans.autom}" tcp dport ${mkSet cfg.haToAutomationPorts} accept
-      iifname "${vlanName vlans.ha}" oifname "${vlanName vlans.autom}" udp dport ${mkSet cfg.haToAutomationPorts} accept
+      iifname "${ifaceFor vlans.ha}" oifname "${ifaceFor vlans.autom}" tcp dport ${mkSet cfg.haToAutomationPorts} accept
+      iifname "${ifaceFor vlans.ha}" oifname "${ifaceFor vlans.autom}" udp dport ${mkSet cfg.haToAutomationPorts} accept
 
       # Home Assistant to IoT VLAN
-      iifname "${vlanName vlans.ha}" oifname "${vlanName vlans.iot}" tcp dport ${mkSet cfg.haToIotPorts} accept
-      iifname "${vlanName vlans.ha}" oifname "${vlanName vlans.iot}" udp dport ${mkSet cfg.haToIotPorts} accept
+      iifname "${ifaceFor vlans.ha}" oifname "${ifaceFor vlans.iot}" tcp dport ${mkSet cfg.haToIotPorts} accept
+      iifname "${ifaceFor vlans.ha}" oifname "${ifaceFor vlans.iot}" udp dport ${mkSet cfg.haToIotPorts} accept
 
       # Home Assistant to Cameras VLAN
-      iifname "${vlanName vlans.ha}" oifname "${vlanName vlans.cams}" tcp dport ${mkSet cfg.haToCamerasPorts} accept
-      iifname "${vlanName vlans.ha}" oifname "${vlanName vlans.cams}" udp dport ${mkSet cfg.haToCamerasPorts} accept
+      iifname "${ifaceFor vlans.ha}" oifname "${ifaceFor vlans.cams}" tcp dport ${mkSet cfg.haToCamerasPorts} accept
+      iifname "${ifaceFor vlans.ha}" oifname "${ifaceFor vlans.cams}" udp dport ${mkSet cfg.haToCamerasPorts} accept
 
       # Home Assistant to Chromecast targets on Home and Media VLANs
-      iifname "${vlanName vlans.ha}" oifname ${chromecastIfaces} tcp dport ${chromecastTcp} accept
-      iifname "${vlanName vlans.ha}" oifname ${chromecastIfaces} udp dport ${chromecastUdp} accept
+      iifname "${ifaceFor vlans.ha}" oifname ${chromecastIfaces} tcp dport ${chromecastTcp} accept
+      iifname "${ifaceFor vlans.ha}" oifname ${chromecastIfaces} udp dport ${chromecastUdp} accept
 
       # Home Assistant HomeKit (TCP range + mDNS)
-      iifname "${vlanName vlans.ha}" ip daddr ${rfc1918Addrs} tcp dport ${cfg.haHomeKitRange} accept
-      iifname "${vlanName vlans.ha}" ip daddr ${rfc1918Addrs} udp dport 5353 accept
+      iifname "${ifaceFor vlans.ha}" ip daddr ${rfc1918Addrs} tcp dport ${cfg.haHomeKitRange} accept
+      iifname "${ifaceFor vlans.ha}" ip daddr ${rfc1918Addrs} udp dport 5353 accept
 
       # Management network administrative access
-      iifname "${vlanName vlans.mgmt}" ip daddr ${rfc1918Addrs} tcp dport ${mkSet cfg.mgmtAdminPorts} accept
+      iifname "${ifaceFor vlans.mgmt}" ip daddr ${rfc1918Addrs} tcp dport ${mkSet cfg.mgmtAdminPorts} accept
 
       # Default deny between RFC1918 subnets
       iifname ${internalIfaceSet} oifname ${internalIfaceSet} ip saddr ${rfc1918Addrs} ip daddr ${rfc1918Addrs} drop
 
       # Explicitly reject Cameras VLAN to WAN
-      iifname "${vlanName vlans.cams}" oifname "${wan}" counter reject
+      iifname "${ifaceFor vlans.cams}" oifname "${wan}" counter reject
     '';
   };
 }
