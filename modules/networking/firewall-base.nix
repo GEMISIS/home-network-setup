@@ -15,6 +15,14 @@ with lib; let
       "${hw.cameras.iface}.${toString vl.cams}"
       hw.mgmt.iface
     ];
+  homeIface = "${hw.trunk.iface}.${toString vl.home}";
+  adminPorts = config.router.networking.policies.mgmtAdminPorts;
+  baseIfaceOpts = {
+    allowedUDPPorts = [ 53 67 68 ];
+    allowedTCPPorts = [ 53 ];
+  };
+  ifaceOpts = iface: baseIfaceOpts //
+    (if elem iface [ homeIface hw.mgmt.iface ] then { allowedTCPPorts = baseIfaceOpts.allowedTCPPorts ++ adminPorts; } else {});
 in
 {
   options.router.networking.firewallBase.enable = mkOption {
@@ -32,11 +40,7 @@ in
     networking.firewall = {
       enable = true;
       rejectPackets = false;
-      trustedInterfaces = vlanIfaces;
-      interfaces = genAttrs vlanIfaces (_: {
-        allowedUDPPorts = [ 53 67 68 ];
-        allowedTCPPorts = [ 53 ];
-      });
+      interfaces = genAttrs vlanIfaces ifaceOpts;
     };
   };
 }
