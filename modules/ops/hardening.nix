@@ -5,9 +5,9 @@ with lib;
 let
   cfg = config.router.ops.hardening;
   mgmtVid = toString config.router.vlans.mgmt;
-  mgmtIp = elemAt (splitString "/" config.router.addr4.base."${mgmtVid}") 0;
+  mgmtIp = config.router.addr4.base."${mgmtVid}".address;
   homeVid = toString config.router.vlans.home;
-  homeIp = elemAt (splitString "/" config.router.addr4.base."${homeVid}") 0;
+  homeIp = config.router.addr4.base."${homeVid}".address;
 in
 {
   options.router.ops.hardening = {
