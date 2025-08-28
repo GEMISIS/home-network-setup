@@ -17,7 +17,7 @@
       ./modules/networking/vlans.nix
       ./modules/networking/firewall-policies.nix
       ./modules/networking/discovery.nix
-      ./modules/networking/wireguard.nix
+      # ./modules/networking/wireguard.nix
       ./modules/ops/updates.nix
       ./modules/ops/logging.nix
       ./modules/ops/hardening.nix
@@ -99,12 +99,12 @@
   # mDNS reflection for HomeKit + Chromecast (51↔40, 51↔50)
   router.networking.discovery.enable = true;
 
-  router.vpn.wireguard = {
-    enable = true;
-    listenPort = 51820;
-    privateKeyFile = "/etc/wireguard/privatekey";
-    peers = [];
-  };
+  # router.vpn.wireguard = {
+  #   enable = true;
+  #   listenPort = 51820;
+  #   privateKeyFile = "/etc/wireguard/privatekey";
+  #   peers = [];
+  # };
 
   # Ops
   router.ops.updates.enable = true;
