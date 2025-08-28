@@ -70,13 +70,7 @@ in
       vlans = vlanAttrs;
       interfaces = ifaceAttrs;
     };
-    systemd.network = {
-      enable = true;
-      wait-online = {
-        enable = true;
-        anyInterface = true;
-      };
-    };
+    systemd.network.enable = true;
     assertions = [
       {
         assertion = config.router.services.dnsmasq.enable;
