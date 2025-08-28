@@ -39,8 +39,6 @@ in {
           mac = mkOption { type = types.str; };
           ip = mkOption { type = types.str; };
           hostname = mkOption { type = types.str; };
-          tag = mkOption { type = types.nullOr types.str; default = null; };
-          vlan = mkOption { type = types.nullOr types.int; default = null; };
         };
       });
       default = [];
@@ -57,11 +55,7 @@ in {
         except-interface = [ hw.wan.iface ];
         dhcp-range      = map mkRange allVids;
         dhcp-option     = concatMap mkOptions allVids;
-        dhcp-host       = map (l: "${l.mac}${optionalString (l.tag != null) ",set:${l.tag}"},${l.ip},${l.hostname}") cfg.staticLeases;
-        dhcp-vlan       =
-          let
-            entries = map (l: if l.tag != null && l.vlan != null then "tag:${l.tag},${toString l.vlan}" else null) cfg.staticLeases;
-          in filter (v: v != null) entries;
+        dhcp-host       = map (l: "${l.mac},${l.ip},${l.hostname}") cfg.staticLeases;
         dhcp-authoritative = true;
       };
     };

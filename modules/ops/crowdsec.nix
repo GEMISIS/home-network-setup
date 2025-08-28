@@ -16,8 +16,16 @@ in {
   config = mkIf cfg.enable {
     environment.systemPackages = [ pkgs.crowdsec pkgs.crowdsec-firewall-bouncer ];
 
-    environment.etc."crowdsec/config.yaml".source = pkgs.crowdsec + "/etc/crowdsec/config.yaml";
-    environment.etc."crowdsec/bouncers/crowdsec-firewall-bouncer.yaml".source = pkgs.crowdsec-firewall-bouncer + "/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml";
+    environment.etc."crowdsec/config.yaml".source = pkgs.crowdsec + "/share/crowdsec/config/config.yaml";
+    environment.etc."crowdsec/acquis.yaml".source = pkgs.crowdsec + "/share/crowdsec/config/acquis.yaml";
+    environment.etc."crowdsec/profiles.yaml".source = pkgs.crowdsec + "/share/crowdsec/config/profiles.yaml";
+    environment.etc."crowdsec/console.yaml".source = pkgs.crowdsec + "/share/crowdsec/config/console.yaml";
+    environment.etc."crowdsec/local_api_credentials.yaml".source = pkgs.crowdsec + "/share/crowdsec/config/local_api_credentials.yaml";
+    environment.etc."crowdsec/bouncers/crowdsec-firewall-bouncer.yaml".text = ''
+      api_url: http://127.0.0.1:8080/
+      api_key: "REPLACE_WITH_API_KEY"
+      mode: nftables
+    '';
 
     systemd.services.crowdsec = {
       description = "CrowdSec agent";
@@ -35,7 +43,7 @@ in {
       after = [ "crowdsec.service" "network-online.target" ];
       wants = [ "crowdsec.service" "network-online.target" ];
       serviceConfig = {
-        ExecStart = "${pkgs.crowdsec-firewall-bouncer}/bin/crowdsec-firewall-bouncer -c /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml";
+        ExecStart = "${pkgs.crowdsec-firewall-bouncer}/bin/cs-firewall-bouncer -c /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml";
         Restart = "on-failure";
       };
       wantedBy = [ "multi-user.target" ];
