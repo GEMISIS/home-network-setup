@@ -8,15 +8,6 @@ let
   vl  = config.router.vlans;
   addr4 = config.router.addr4.base;
 
-  mkIPv4 = vid:
-    let
-      cidr  = addr4."${toString vid}";
-      parts = splitString "/" cidr;
-    in {
-      address = elemAt parts 0;
-      prefixLength = toInt (elemAt parts 1);
-    };
-
   trunkVids  = [ vl.iot vl.autom vl.guest vl.home vl.ha ];
   nativeVid  = vl.media;
   camerasVid = vl.cams;
@@ -39,7 +30,7 @@ let
 
   ifaceAttrs = listToAttrs (
     [
-      { name = hw.trunk.iface;   value = { ipv4.addresses = [ (mkIPv4 nativeVid) ]; useDHCP = false; }; }
+      { name = hw.trunk.iface;   value = { ipv4.addresses = [ addr4.${toString nativeVid} ]; useDHCP = false; }; }
       { name = hw.cameras.iface; value = { useDHCP = false; }; }
     ]
     ++ map
@@ -48,7 +39,7 @@ let
           ifName = "${hw.trunk.iface}.${toString vid}";
         in {
           name = ifName;
-          value = { ipv4.addresses = [ (mkIPv4 vid) ]; useDHCP = false; };
+          value = { ipv4.addresses = [ addr4.${toString vid} ]; useDHCP = false; };
         }
       )
       trunkVids
@@ -57,11 +48,11 @@ let
           ifName = "${hw.cameras.iface}.${toString camerasVid}";
         in {
           name = ifName;
-          value = { ipv4.addresses = [ (mkIPv4 camerasVid) ]; useDHCP = false; };
+          value = { ipv4.addresses = [ addr4.${toString camerasVid} ]; useDHCP = false; };
         })
         {
           name = hw.mgmt.iface;
-          value = { ipv4.addresses = [ (mkIPv4 mgmtVid) ]; useDHCP = false; };
+          value = { ipv4.addresses = [ addr4.${toString mgmtVid} ]; useDHCP = false; };
         }
       ]
   );

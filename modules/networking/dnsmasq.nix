@@ -3,11 +3,16 @@
 with lib;
 
 let
-  cfg = config.router.services.dnsmasq;
-  vl  = config.router.vlans;
-  hw  = config.router.hw;
+  cfg   = config.router.services.dnsmasq;
+  vl    = config.router.vlans;
+  hw    = config.router.hw;
+  addr4 = config.router.addr4.base;
 
-  mkIP = vid: "192.168.${toString vid}";
+  mkBaseIP = vid:
+    let
+      addr = addr4.${toString vid}.address;
+      octets = splitString "." addr;
+    in "${elemAt octets 0}.${elemAt octets 1}.${elemAt octets 2}";
 
   trunkVids = [ vl.iot vl.autom vl.guest vl.home vl.ha ];
   allVids   = trunkVids ++ [ vl.media vl.cams vl.mgmt ];
@@ -19,10 +24,17 @@ let
     else hw.mgmt.iface;
 
   mkRange = vid:
-    let iface = ifaceFor vid; in "${iface},${mkIP vid}.100,${mkIP vid}.199,255.255.255.0,12h";
+    let
+      iface = ifaceFor vid;
+      base = mkBaseIP vid;
+    in "${iface},${base}.100,${base}.199,255.255.255.0,12h";
 
   mkOptions = vid:
-    let gw = "${mkIP vid}.1"; iface = ifaceFor vid; in [
+    let
+      base = mkBaseIP vid;
+      gw   = "${base}.1";
+      iface = ifaceFor vid;
+    in [
       "${iface},option:router,${gw}"
       "${iface},option:dns-server,${gw}"
     ];

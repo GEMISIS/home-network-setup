@@ -30,11 +30,21 @@ in {
   };
 
   options.router.addr4.base = mkOption {
-    type = types.attrsOf types.str;
+    type = types.attrsOf (types.submodule {
+      options = {
+        address = mkOption { type = types.str; };
+        prefixLength = mkOption { type = types.int; };
+      };
+    });
     default = {
-      "10" = "192.168.10.1/24"; "20" = "192.168.20.1/24"; "30" = "192.168.30.1/24";
-      "40" = "192.168.40.1/24"; "50" = "192.168.50.1/24"; "51" = "192.168.51.1/24";
-      "60" = "192.168.60.1/24"; "70" = "192.168.70.1/24";
+      "10" = { address = "192.168.10.1"; prefixLength = 24; };
+      "20" = { address = "192.168.20.1"; prefixLength = 24; };
+      "30" = { address = "192.168.30.1"; prefixLength = 24; };
+      "40" = { address = "192.168.40.1"; prefixLength = 24; };
+      "50" = { address = "192.168.50.1"; prefixLength = 24; };
+      "51" = { address = "192.168.51.1"; prefixLength = 24; };
+      "60" = { address = "192.168.60.1"; prefixLength = 24; };
+      "70" = { address = "192.168.70.1"; prefixLength = 24; };
     };
   };
 
