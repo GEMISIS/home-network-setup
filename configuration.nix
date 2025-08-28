@@ -20,6 +20,7 @@
       ./modules/ops/updates.nix
       ./modules/ops/logging.nix
       ./modules/ops/hardening.nix
+      ./modules/ops/crowdsec.nix
     ];
 
   # Use the systemd-boot EFI boot loader.
@@ -74,8 +75,6 @@
         mac = "d8:3a:dd:b7:09:e2";
         ip = "192.168.51.10";
         hostname = "homeassistant";
-        tag = "ha";
-        vlan = 51;
       }
     ];
   };
@@ -110,7 +109,12 @@
     sshAllowedUsers = [ "gemisis" ];
   };
 
+  router.ops.crowdsec.enable = true;
+
   # IPv4 only for now; leave IPv6 disabled/untouched.
 
+  sops = {
+    age.keyFile = "/root/age.key";
+  };
 }
 

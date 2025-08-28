@@ -6,6 +6,8 @@ let
   cfg = config.router.ops.hardening;
   mgmtVid = toString config.router.vlans.mgmt;
   mgmtIp = elemAt (splitString "/" config.router.addr4.base."${mgmtVid}") 0;
+  homeVid = toString config.router.vlans.home;
+  homeIp = elemAt (splitString "/" config.router.addr4.base."${homeVid}") 0;
 in
 {
   options.router.ops.hardening = {
@@ -23,12 +25,11 @@ in
   };
 
   config = mkIf cfg.enable {
-    # crowdsec module not present in current nixpkgs; relying on nftables rules only.
     services.openssh = {
       settings =
         {
-          # Restrict SSH to management network and WireGuard interface
-          ListenAddress = [ mgmtIp "0.0.0.0%wg0" ];
+          # Restrict SSH to management, home networks and WireGuard interface
+          ListenAddress = [ mgmtIp homeIp "0.0.0.0%wg0" ];
           PasswordAuthentication = "no";
         }
         // (mkIf (cfg.sshAllowedUsers != [ ]) {
