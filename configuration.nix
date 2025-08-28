@@ -113,5 +113,8 @@
 
   # IPv4 only for now; leave IPv6 disabled/untouched.
 
+  sops = {
+    age.keyFile = "/root/age.key";
+  };
 }
 
