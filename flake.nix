@@ -10,9 +10,11 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, home-manager }:
+  outputs = { self, nixpkgs, home-manager, sops-nix }:
     let
       system = "x86_64-linux";
       pkgsUnfree = import nixpkgs {
@@ -23,6 +25,7 @@
       nixosConfigurations.McAlister-Home = nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
+          sops-nix.nixosModules.sops
           ./configuration.nix
           home-manager.nixosModules.home-manager
           {

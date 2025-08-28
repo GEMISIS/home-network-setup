@@ -21,11 +21,21 @@ in {
     environment.etc."crowdsec/profiles.yaml".source = pkgs.crowdsec + "/share/crowdsec/config/profiles.yaml";
     environment.etc."crowdsec/console.yaml".source = pkgs.crowdsec + "/share/crowdsec/config/console.yaml";
     environment.etc."crowdsec/local_api_credentials.yaml".source = pkgs.crowdsec + "/share/crowdsec/config/local_api_credentials.yaml";
-    environment.etc."crowdsec/bouncers/crowdsec-firewall-bouncer.yaml".text = ''
+
+    sops.secrets.crowdsecBouncerKey = {
+      sopsFile = ../../secrets/crowdsec.yaml;
+      key = "crowdsec.bouncer_key";
+      restartUnits = [ "crowdsec-firewall-bouncer.service" ];
+    };
+
+    sops.templates."crowdsec-firewall-bouncer.yaml".content = ''
       api_url: http://127.0.0.1:8080/
-      api_key: "REPLACE_WITH_API_KEY"
+      api_key: {{ .crowdsecBouncerKey }}
       mode: nftables
     '';
+
+    environment.etc."crowdsec/bouncers/crowdsec-firewall-bouncer.yaml".source =
+      config.sops.templates."crowdsec-firewall-bouncer.yaml".path;
 
     systemd.services.crowdsec = {
       description = "CrowdSec agent";
