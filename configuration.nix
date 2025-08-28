@@ -17,9 +17,11 @@
       ./modules/networking/vlans.nix
       ./modules/networking/firewall-policies.nix
       ./modules/networking/discovery.nix
+      ./modules/networking/wireguard.nix
       ./modules/ops/updates.nix
       ./modules/ops/logging.nix
       ./modules/ops/hardening.nix
+      ./modules/ops/crowdsec.nix
     ];
 
   # Use the systemd-boot EFI boot loader.
@@ -97,6 +99,13 @@
   # mDNS reflection for HomeKit + Chromecast (51↔40, 51↔50)
   router.networking.discovery.enable = true;
 
+  router.vpn.wireguard = {
+    enable = true;
+    listenPort = 51820;
+    privateKeyFile = "/etc/wireguard/privatekey";
+    peers = [];
+  };
+
   # Ops
   router.ops.updates.enable = true;
 
@@ -109,6 +118,8 @@
     enable = true;
     sshAllowedUsers = [ "gemisis" ];
   };
+
+  router.ops.crowdsec.enable = true;
 
   # IPv4 only for now; leave IPv6 disabled/untouched.
 

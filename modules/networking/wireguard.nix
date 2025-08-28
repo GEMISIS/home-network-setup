@@ -16,6 +16,10 @@ in {
       type = types.int;
       default = 51820;
     };
+    privateKeyFile = mkOption {
+      type = types.str;
+      description = "Path to the WireGuard private key file.";
+    };
     peers = mkOption {
       type = types.listOf types.attrs;
       default = [];
@@ -23,22 +27,17 @@ in {
   };
 
   config = mkIf cfg.enable {
-    services.wireguard.interfaces.wg0 = {
+    networking.wireguard.interfaces.wg0 = {
       ips = [ "10.70.0.1/24" ];
       listenPort = cfg.listenPort;
+      privateKeyFile = cfg.privateKeyFile;
       peers = cfg.peers;
     };
 
-    networking.firewall = {
-      interfaces."${wanIface}".allowedUDPPorts = [ cfg.listenPort ];
-      extraCommands = ''
-        nft add rule inet filter forward iifname wg0 oifname ${mgmtIface} ip daddr 192.168.70.0/24 counter accept
-        nft add rule inet filter forward iifname wg0 counter drop
-      '';
-      extraStopCommands = ''
-        nft delete rule inet filter forward iifname wg0 oifname ${mgmtIface} ip daddr 192.168.70.0/24 counter accept
-        nft delete rule inet filter forward iifname wg0 counter drop
-      '';
-    };
+    networking.firewall.interfaces."${wanIface}".allowedUDPPorts = [ cfg.listenPort ];
+    networking.firewall.extraForwardRules = lib.mkAfter ''
+      iifname "wg0" oifname "${mgmtIface}" ip daddr 192.168.70.0/24 accept
+      iifname "wg0" drop
+    '';
   };
 }

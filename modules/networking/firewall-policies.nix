@@ -75,8 +75,11 @@ in {
       # Default deny between RFC1918 subnets
       iifname ${internalIfaceSet} oifname ${internalIfaceSet} ip saddr ${rfc1918Addrs} ip daddr ${rfc1918Addrs} drop
 
-      # Explicitly reject Cameras VLAN ICMP to WAN
-      iifname "${vlanName vlans.cams}" oifname "${wan}" meta l4proto { icmp, icmpv6 } reject
+      # Block Automation VLAN from WAN
+      iifname "${vlanName vlans.autom}" oifname "${wan}" drop
+
+      # Block Cameras VLAN from WAN
+      iifname "${vlanName vlans.cams}" oifname "${wan}" reject
     '';
   };
 }
