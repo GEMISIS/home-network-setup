@@ -24,7 +24,7 @@ in {
 
     sops.secrets.crowdsecBouncerKey = {
       sopsFile = ../../secrets/crowdsec.yaml;
-      key = "crowdsec_bouncer_key";
+      key = "crowdsec.bouncer_key";
       restartUnits = [ "crowdsec-firewall-bouncer.service" ];
     };
 
