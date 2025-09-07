@@ -21,12 +21,10 @@
         auth_enabled = false;
         server.http_listen_port = 3100;
         common = {
+          instance_addr = "127.0.0.1";
           path_prefix = "/var/lib/loki";
-          ring = {
-            instance_addr = "127.0.0.1";
-            kvstore.store = "inmemory";
-          };
           replication_factor = 1;
+          ring.kvstore.store = "inmemory";
         };
         schema_config.configs = [{
           from = "2020-10-24";
@@ -39,15 +37,15 @@
           };
         }];
         storage_config = {
-          filesystem = {
-            chunks_directory = "/var/lib/loki/chunks";
-            rules_directory = "/var/lib/loki/rules";
-          };
+          filesystem.directory = "/var/lib/loki/chunks";
           boltdb_shipper = {
             active_index_directory = "/var/lib/loki/index";
             cache_location = "/var/lib/loki/cache";
-            shared_store = "filesystem";
           };
+        };
+        ruler.storage = {
+          type = "local";
+          local.directory = "/var/lib/loki/rules";
         };
       };
     };
