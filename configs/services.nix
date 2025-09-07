@@ -47,6 +47,10 @@
           type = "local";
           local.directory = "/var/lib/loki/rules";
         };
+
+        limits_config = {
+          allow_structured_metadata = false;
+        };
       };
     };
   };
