@@ -73,7 +73,7 @@
     staticLeases = [
       {
         mac = "d8:3a:dd:b7:09:e2";
-        ip = "192.168.51.10";
+        ip = "192.168.50.10";
         hostname = "homeassistant";
       }
     ];
