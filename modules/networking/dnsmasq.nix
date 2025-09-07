@@ -56,7 +56,7 @@ in {
     services.dnsmasq = {
       enable = true;
       settings = {
-        bind-interfaces = true;
+        bind-dynamic    = true;
         interface       = map ifaceFor allVids;
         except-interface = [ hw.wan.iface ];
         dhcp-range      = map mkRange allVids;

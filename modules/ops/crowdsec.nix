@@ -44,6 +44,7 @@ in {
       serviceConfig = {
         ExecStart = "${pkgs.crowdsec}/bin/crowdsec -c /etc/crowdsec/config.yaml";
         Restart = "on-failure";
+        RestartSec = 2;
       };
       wantedBy = [ "multi-user.target" ];
     };
@@ -55,6 +56,7 @@ in {
       serviceConfig = {
         ExecStart = "${pkgs.crowdsec-firewall-bouncer}/bin/cs-firewall-bouncer -c /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml";
         Restart = "on-failure";
+        RestartSec = 2;
       };
       wantedBy = [ "multi-user.target" ];
     };
