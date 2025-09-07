@@ -19,12 +19,18 @@ let
     else hw.mgmt.iface;
 
   mkRange = vid:
-    let iface = ifaceFor vid; in "${iface},${mkIP vid}.100,${mkIP vid}.199,255.255.255.0,12h";
+    let
+      iface = ifaceFor vid;
+    in
+      "interface:${iface},${mkIP vid}.100,${mkIP vid}.199,255.255.255.0,12h";
 
   mkOptions = vid:
-    let gw = "${mkIP vid}.1"; iface = ifaceFor vid; in [
-      "${iface},option:router,${gw}"
-      "${iface},option:dns-server,${gw}"
+    let
+      gw    = "${mkIP vid}.1";
+      iface = ifaceFor vid;
+    in [
+      "interface:${iface},option:router,${gw}"
+      "interface:${iface},option:dns-server,${gw}"
     ];
 in {
   options.router.services.dnsmasq = {
@@ -50,7 +56,7 @@ in {
     services.dnsmasq = {
       enable = true;
       settings = {
-        bind-interfaces = true;
+        bind-dynamic    = true;
         interface       = map ifaceFor allVids;
         except-interface = [ hw.wan.iface ];
         dhcp-range      = map mkRange allVids;
