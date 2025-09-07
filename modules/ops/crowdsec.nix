@@ -43,6 +43,8 @@ in {
       wants = [ "network-online.target" ];
       serviceConfig = {
         ExecStart = "${pkgs.crowdsec}/bin/crowdsec -c /etc/crowdsec/config.yaml";
+        WorkingDirectory = "/var/lib/crowdsec";
+        StateDirectory = "crowdsec";
         Restart = "on-failure";
         RestartSec = 2;
       };
