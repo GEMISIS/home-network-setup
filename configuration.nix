@@ -101,7 +101,7 @@
 
   router.ops.logging = {
     enable = true;
-    lokiUrl = "http://192.168.70.5:3100"; # set your Loki IP/host in mgmt VLAN
+    lokiUrl = "http://127.0.0.1:3100";
   };
 
   router.ops.hardening = {
