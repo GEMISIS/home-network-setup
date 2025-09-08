@@ -51,7 +51,7 @@
   router.hw = {
     wan.iface = "enp8s0"; # 10G to ISP (DHCP; single public IP)
     mgmt.iface = "enp7s0"; # 10G management/office (VLAN 70 access)
-    trunk.iface = "enp1s0"; # 2.5G trunk to WAPs and VLAN devices (10/20/30/40/50/51)
+    trunk.iface = "enp1s0"; # 2.5G trunk to WAPs and VLAN devices (10/20/30/40/50)
     cameras.iface = "enp2s0"; # 2.5G trunk carrying tagged VLAN 60
   };
 
@@ -93,7 +93,7 @@
     mgmtAdminPorts = [ 22 443 ];
   };
 
-  # mDNS reflection for HomeKit + Chromecast (51↔40, 51↔50)
+  # mDNS reflection for HomeKit + Chromecast (50↔40, 50↔10, 50↔20)
   router.networking.discovery.enable = true;
 
   # Ops

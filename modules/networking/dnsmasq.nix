@@ -9,7 +9,7 @@ let
 
   mkIP = vid: "192.168.${toString vid}";
 
-  trunkVids = [ vl.iot vl.autom vl.guest vl.home vl.ha ];
+  trunkVids = [ vl.iot vl.autom vl.guest vl.home ];
   allVids   = trunkVids ++ [ vl.media vl.cams vl.mgmt ];
 
   ifaceFor = vid:
