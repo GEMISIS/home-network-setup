@@ -21,6 +21,7 @@ in {
     environment.etc."crowdsec/profiles.yaml".source = pkgs.crowdsec + "/share/crowdsec/config/profiles.yaml";
     environment.etc."crowdsec/console.yaml".source = pkgs.crowdsec + "/share/crowdsec/config/console.yaml";
     environment.etc."crowdsec/local_api_credentials.yaml".source = pkgs.crowdsec + "/share/crowdsec/config/local_api_credentials.yaml";
+    environment.etc."crowdsec/simulation.yaml".source = pkgs.crowdsec + "/share/crowdsec/config/simulation.yaml";
 
     sops.secrets.crowdsecBouncerKey = {
       sopsFile = ../../secrets/crowdsec.yaml;
