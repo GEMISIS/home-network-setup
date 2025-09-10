@@ -11,12 +11,11 @@ There's a full architecture document located in ARCH.md, and detailed software f
 | 20   | Home‑automation devices      | ✖︎              | Wi‑Fi SSID #2 |
 | 30   | Guest network                | ✔︎              | Wi‑Fi SSID #3 |
 | 40   | Home‑user devices            | ✔︎              | Wi‑Fi SSID #4 |
-| 50   | Media (Apple TV, consoles)   | ✔︎              | Wired only |
-| 51   | Home‑Assistant               | ✔︎              | Untagged · static IP |
+| 50   | Media & Home Assistant       | ✔︎              | Wired only · HA static 192.168.50.10 |
 | 60   | Security cameras             | ✖︎              | Untagged on dedicated NIC |
 | 70   | Home‑office / Management     | ✔︎ (optional)   | Private 10 G link |
 
-Wireless access points tag VLAN IDs for their clients. Wired devices connect through unmanaged switches; untagged traffic lands in VLAN 50 by default. The router uses MAC rules to place the Home Assistant server in VLAN 51 and cameras on VLAN 60.
+Wireless access points tag VLAN IDs for their clients. Wired devices connect through unmanaged switches; untagged traffic lands in VLAN 50 by default. Cameras are isolated on VLAN 60 via a dedicated NIC.
 
 ```mermaid
 flowchart LR
@@ -29,7 +28,7 @@ flowchart LR
     enp1s0 --> SW1["Unmanaged Switch"]
     SW1 -->|"Tagged 10/20/30/40"| WAPs["6× WAPs</br>SSIDs: VLAN 10 / 20 / 30 / 40"]
     SW1 -->|"Untagged → VLAN 50"| Media["Media Devices</br>VLAN 50 / Untagged"]
-    SW1 -->|"Untagged (MAC → VLAN 51)"| HA["Home Assistant</br>Static 192.168.51.10"]
+    SW1 -->|"Untagged → VLAN 50"| HA["Home Assistant</br>Static 192.168.50.10"]
 
     Router --> enp2s0["enp2s0</br>untagged → VLAN 60"]
     enp2s0 --> SW2["Unmanaged Switch"]

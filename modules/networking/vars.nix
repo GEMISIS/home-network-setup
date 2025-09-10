@@ -24,7 +24,6 @@ in {
     guest = mkOption { type = types.int; default = 30; };
     home  = mkOption { type = types.int; default = 40; };
     media = mkOption { type = types.int; default = 50; };
-    ha    = mkOption { type = types.int; default = 51; };
     cams  = mkOption { type = types.int; default = 60; };
     mgmt  = mkOption { type = types.int; default = 70; };
   };
@@ -33,7 +32,7 @@ in {
     type = types.attrsOf types.str;
     default = {
       "10" = "192.168.10.1/24"; "20" = "192.168.20.1/24"; "30" = "192.168.30.1/24";
-      "40" = "192.168.40.1/24"; "50" = "192.168.50.1/24"; "51" = "192.168.51.1/24";
+      "40" = "192.168.40.1/24"; "50" = "192.168.50.1/24";
       "60" = "192.168.60.1/24"; "70" = "192.168.70.1/24";
     };
   };

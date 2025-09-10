@@ -1,4 +1,4 @@
-| Endpoint pools | • Media (VLAN 50)  <br>• Home Assistant (VLAN 51, static IP, MAC-mapped) | Reach router through the `enp1s0` switch; untagged devices land in VLAN 50. || Camera segment | PoE switch (optional) | Unmanaged switch on `enp2s0`; untagged camera traffic mapped to VLAN 60. |# Home Network Router & VLAN Architecture - Design Document <!-- omit in toc -->
+# Home Network Router & VLAN Architecture - Design Document <!-- omit in toc -->
 
 ## Table of Contents
 1. [Overview](#overview)
@@ -18,12 +18,11 @@ You are building a single-box Linux router (running **NixOS**, see [OS options](
 | 20   | Home‑automation devices      | ✖︎              | Wi‑Fi SSID #2 |
 | 30   | Guest network                | ✔︎              | Wi‑Fi SSID #3 |
 | 40   | Home‑user devices            | ✔︎              | Wi‑Fi SSID #4 |
-| 50   | Media (Apple TV, consoles)   | ✔︎              | Wired only |
-| 51   | Home‑Assistant               | ✔︎              | Untagged · **Static IP 192.168.51.10** (MAC `d8:3a:dd:b7:09:e2` → VLAN 51) |
+| 50   | Media & Home Assistant       | ✔︎              | Wired only · **HA static 192.168.50.10** |
 | 60   | Security cameras             | ✖︎              | Untagged on dedicated NIC (mapped to VLAN 60) |
 | 70   | Home‑office / Management     | ✔︎ (admin-only) | Private 10 G link |
 
-Access points now connect directly to the router and tag VLANs for wireless clients. Small unmanaged switches sit between each router interface and its devices (except the WAN `enp8s0`); untagged wired endpoints hit these switches, and the router assigns VLANs per MAC address. Frames default to VLAN 50, while the Home Assistant MAC maps to VLAN 51 and cameras on `enp2s0` map to VLAN 60.
+Access points now connect directly to the router and tag VLANs for wireless clients. Small unmanaged switches sit between each router interface and its devices (except the WAN `enp8s0`); untagged wired endpoints simply land in VLAN 50. Cameras on `enp2s0` map to VLAN 60 via a dedicated NIC.
 
 ```mermaid
 flowchart LR
@@ -36,7 +35,7 @@ flowchart LR
     enp1s0 --> SW1["Unmanaged Switch"]
     SW1 -->|"Tagged 10/20/30/40"| WAPs["6× WAPs</br>SSIDs: VLAN 10 / 20 / 30 / 40"]
     SW1 -->|"Untagged → VLAN 50"| Media["Media Devices</br>VLAN 50 / Untagged"]
-    SW1 -->|"Untagged (MAC → VLAN 51)"| HA["Home Assistant</br>Static 192.168.51.10"]
+    SW1 -->|"Untagged → VLAN 50"| HA["Home Assistant</br>Static 192.168.50.10"]
 
     Router --> enp2s0["enp2s0</br>untagged → VLAN 60"]
     enp2s0 --> SW2["Unmanaged Switch"]
@@ -58,12 +57,12 @@ flowchart LR
 | WAPs (×6) | Wi‑Fi 6/6E APs | Connected via unmanaged switch on `enp1s0`; broadcast 4 SSIDs (VLAN 10/20/30/40). |
 | Camera segment | PoE switch (optional) | Unmanaged switch on `enp2s0`; untagged camera traffic mapped to VLAN 60. |
 | Home‑office link | 10 G DAC / RJ‑45 | `enp7s0` to unmanaged switch or single device (VLAN 70). |
-| Endpoint pools | • Media (VLAN 50)  <br>• Home Assistant (VLAN 51, static IP, MAC-mapped) | Reach router through the `enp1s0` switch; untagged devices land in VLAN 50. |
+| Endpoint pools | • Media & Home Assistant (VLAN 50, HA static IP) | Reach router through the `enp1s0` switch; untagged devices land in VLAN 50. |
 
 **Interface role map:**
 - **enp8s0** — 10 G WAN uplink (DHCP; single public IP)
 - **enp7s0** — 10 G management/office (VLAN 70) via unmanaged switch or direct host
-- **enp1s0** — 2.5 G trunk via unmanaged switch; untagged frames → VLAN 50 (Home Assistant MAC → VLAN 51)
+- **enp1s0** — 2.5 G trunk via unmanaged switch; untagged frames → VLAN 50
 - **enp2s0** — 2.5 G link via unmanaged PoE switch; untagged frames → VLAN 60
 
 ---
@@ -142,7 +141,7 @@ Recommendations:
 
 | # | Concern | NixOS / Network Tasks |
 |---|---------|-----------------------|
-| **1** | **Default‑deny firewall** | Default drop all inter‑VLAN; allow only explicit flows. NAT only for VLANs 10 / 30 / 40 / 50 / 51 / 70. |
+| **1** | **Default‑deny firewall** | Default drop all inter‑VLAN; allow only explicit flows. NAT only for VLANs 10 / 30 / 40 / 50 / 70. |
 | **2** | **Camera VLAN isolation** | Explicit `reject` for `192.168.60.0/24 -> WAN`. Cameras cannot reach other VLANs. |
 | **3** | **Admin plane isolation** | SSH/HTTPS bound only to router IPs in VLAN 70 and VLAN 40 (family); nftables blocks other VLANs. |
 | **4** | **Timely patching** | Daily `nixos‑upgrade` timer or nightly flake rebuild. |
@@ -155,20 +154,20 @@ Recommendations:
 
 ## Home Assistant Communication Rules
 
-- **HA (VLAN 51)** → **IoT (10)**:
+- **HA (VLAN 50, 192.168.50.10)** → **IoT (10)**:
   TCP/UDP 6053 (ESPHome), 1900 (SSDP), 8008/8009/8443 (Chromecast control), 5540 UDP/TCP + 5541 TCP (Matter)
 
-- **HA (51)** → **Automation (20)**:
+- **HA (50)** → **Automation (20)**:
   TCP/UDP 6053 (ESPHome), 1900 (SSDP), 8008/8009/8443 (Chromecast control), 5540 UDP/TCP + 5541 TCP (Matter)
 
-- **HA (51)** → **Cameras (60)**:
+- **HA (50)** → **Cameras (60)**:
   TCP 80/443, TCP 554 (RTSP)
 
-- **HA (51)** → **Home (40) & Media (50)**:  
+- **HA (50)** → **Home (40)**:
   mDNS 5353/UDP, SSDP 1900/UDP, TCP 8008/8009/8443 (Chromecast)
 
 - **HomeKit Bridge**:  
   TCP range 51720–51750, mDNS 5353/UDP reflected
 
 - **Discovery**:
-  mDNS reflection enabled between 51↔10, 51↔20, 51↔40, and 51↔50
+  mDNS reflection enabled between 50↔10, 50↔20, and 50↔40

@@ -7,7 +7,7 @@ let
   hw = config.router.hw;
   vlans = config.router.vlans;
   trunk = hw.trunk.iface;
-  allowedIfaces = map (v: if v == vlans.media then trunk else "${trunk}.${toString v}") [ vlans.ha vlans.home vlans.media vlans.iot vlans.autom ];
+  allowedIfaces = map (v: if v == vlans.media then trunk else "${trunk}.${toString v}") [ vlans.home vlans.media vlans.iot vlans.autom ];
 in
 {
   imports = [ ./vars.nix ];

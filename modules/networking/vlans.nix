@@ -17,7 +17,7 @@ let
       prefixLength = toInt (elemAt parts 1);
     };
 
-  trunkVids  = [ vl.iot vl.autom vl.guest vl.home vl.ha ];
+  trunkVids  = [ vl.iot vl.autom vl.guest vl.home ];
   nativeVid  = vl.media;
   camerasVid = vl.cams;
   mgmtVid    = vl.mgmt;
