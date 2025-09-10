@@ -19,7 +19,10 @@
       enable = true;
       configuration = {
         auth_enabled = false;
-        server.http_listen_port = 3100;
+        server = {
+          http_listen_port = 3100;
+          http_listen_address = "0.0.0.0";
+        };
         common = {
           instance_addr = "127.0.0.1";
           path_prefix = "/var/lib/loki";

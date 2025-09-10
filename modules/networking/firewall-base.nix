@@ -22,7 +22,9 @@ with lib; let
     allowedTCPPorts = [ 53 ];
   };
   ifaceRules = genAttrs vlanIfaces (iface:
-    if iface == mgmtIface || iface == homeIface then
+    if iface == mgmtIface then
+      defaultIface // { allowedTCPPorts = defaultIface.allowedTCPPorts ++ [ 22 443 3100 ]; }
+    else if iface == homeIface then
       defaultIface // { allowedTCPPorts = defaultIface.allowedTCPPorts ++ [ 22 443 ]; }
     else
       defaultIface

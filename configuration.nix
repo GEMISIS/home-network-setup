@@ -90,7 +90,7 @@
     # HomeKit bridge TCP range
     haHomeKitRange = "51720-51750";
 
-    mgmtAdminPorts = [ 22 443 ];
+    mgmtAdminPorts = [ 22 443 3100 ];
   };
 
   # mDNS reflection for HomeKit + Chromecast (51↔40, 51↔50)
