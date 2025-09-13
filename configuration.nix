@@ -6,7 +6,8 @@
 
 {
   imports =
-    [ # Include the results of the hardware scan and modular configs.
+    [
+      # Include the results of the hardware scan and modular configs.
       ./hardware-configuration.nix
       ./configs/services.nix
       ./configs/users.nix
@@ -18,9 +19,7 @@
       ./modules/networking/firewall-policies.nix
       ./modules/networking/discovery.nix
       ./modules/ops/updates.nix
-      ./modules/ops/logging.nix
       ./modules/ops/hardening.nix
-      ./modules/ops/crowdsec.nix
     ];
 
   # Use the systemd-boot EFI boot loader.
@@ -99,17 +98,11 @@
   # Ops
   router.ops.updates.enable = true;
 
-  router.ops.logging = {
-    enable = true;
-    lokiUrl = "http://192.168.70.5:3100"; # set your Loki IP/host in mgmt VLAN
-  };
-
   router.ops.hardening = {
     enable = true;
     sshAllowedUsers = [ "gemisis" ];
   };
 
-  router.ops.crowdsec.enable = true;
 
   # IPv4 only for now; leave IPv6 disabled/untouched.
 

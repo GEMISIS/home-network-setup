@@ -145,8 +145,8 @@ Recommendations:
 | **2** | **Camera VLAN isolation** | Explicit `reject` for `192.168.60.0/24 -> WAN`. Cameras cannot reach other VLANs. |
 | **3** | **Admin plane isolation** | SSH/HTTPS bound only to router IPs in VLAN 70 and VLAN 40 (family); nftables blocks other VLANs. |
 | **4** | **Timely patching** | Daily `nixos‑upgrade` timer or nightly flake rebuild. |
-| **5** | **Central logging** | Promtail → Loki in VLAN 70. Loki access restricted to mgmt only. |
-| **6** | **Intrusion prevention** | CrowdSec + nftables bouncer. |
+| **5** | **Central logging (disabled)** | Previously Promtail → Loki in VLAN 70. |
+| **6** | **Intrusion prevention (disabled)** | CrowdSec + nftables bouncer currently off. |
 | **7** | **802.1X (optional)** | Enable RADIUS if access points support it. |
 | **10** | **VLAN‑hopping prevention** | Native VLAN = none (4095). Explicit SSID ↔ VLAN mapping. |
 
