@@ -58,17 +58,9 @@ The main machine is running NixOS, and this repo contains its configurations. Fu
    sudo cat /root/age.key.pub > keys/age.pub
    ```
 
-3. **Encrypt the CrowdSec API key:**
-   ```bash
-   export SOPS_AGE_KEY_FILE=/root/age.key
-   SOPS_AGE_RECIPIENTS="$(cat keys/age.pub)" \
-     nix shell nixpkgs#sops -c sops secrets/crowdsec.yaml
-   ```
-   Edit `crowdsec.bouncer_key` and save to keep the file encrypted.
+3. **Configure Git (optional):** set your user and remote so changes can be pushed back upstream.
 
-4. **Configure Git (optional):** set your user and remote so changes can be pushed back upstream.
-
-5. **Deploy:**
+4. **Deploy:**
    ```bash
    sudo nixos-rebuild switch
    ```

@@ -10,8 +10,8 @@ This document describes the software components and logical flows required to im
 | Routing & Firewall | **nftables** with NixOS firewall | IPv4/IPv6 forwarding, NAT and inter‑VLAN policy |
 | DHCP & DNS | **dnsmasq** | Per‑VLAN address pools and local DNS cache |
 | VPN (remote management) | **WireGuard** | Secure access into VLAN 70 |
-| Log shipping | **Promtail** → Loki | Local log storage on the router |
-| Intrusion prevention | **CrowdSec** with nftables bouncer | Brute‑force and bot protection |
+| Log shipping | _Disabled (was Promtail → Loki)_ | Local log storage on the router |
+| Intrusion prevention | _Disabled (was CrowdSec with nftables bouncer)_ | Brute‑force and bot protection |
 | Optional advanced DHCP/DNS | **Kea** + **Unbound** | Replace dnsmasq when split services are required |
 
 ## Software Integration
@@ -23,9 +23,9 @@ flowchart LR
         NF["nftables"]
         DM["dnsmasq"]
         WG["WireGuard"]
-        PR["Promtail"]
-        CS["CrowdSec"]
-        LK["Loki"]
+        PR["Promtail (disabled)"]
+        CS["CrowdSec (disabled)"]
+        LK["Loki (disabled)"]
     end
 
     %% Networks
@@ -49,13 +49,13 @@ flowchart LR
     HA -->|"Firewall rules"| NF
     NF -->|"NAT & filtering"| ISP
     WG -->|"Remote access"| Mgmt
-    NF -->|"logs"| PR
-    DM -->|"logs"| PR
-    WG -->|"logs"| PR
-    CS -->|"logs"| PR
-    PR -->|"push"| LK
-    Mgmt -->|"HTTP"| LK
-    CS -->|"Blocks"| NF
+    NF -.->|"logs"| PR
+    DM -.->|"logs"| PR
+    WG -.->|"logs"| PR
+    CS -.->|"logs"| PR
+    PR -.->|"push"| LK
+    Mgmt -.->|"HTTP"| LK
+    CS -.->|"Blocks"| NF
 ```
 
 ## Interface IP & Connectivity Flows
@@ -127,7 +127,7 @@ flowchart LR
     Others["Other VLANs"]
     subgraph RouterBox["Router"]
         Router["SSH / HTTPS"]
-        Loki["Loki log store"]
+        Loki["Loki log store (disabled)"]
     end
 
     WGUser -->|"WireGuard"| Router
@@ -135,9 +135,9 @@ flowchart LR
     FamilyPC -->|"SSH"| Router
     HA -.-|"blocked"| Router
     Others -.-|"blocked"| Router
-    Router -- "logs via Promtail" --> Loki
-    AdminPC -->|"HTTP"| Loki
-    WGUser -->|"HTTP"| Loki
+    Router -. "logs via Promtail (disabled)" .-> Loki
+    AdminPC -.->|"HTTP"| Loki
+    WGUser -.->|"HTTP"| Loki
 ```
 
 Only devices in VLAN 40 and VLAN 70 (or over WireGuard) may SSH into the router; nftables blocks all other VLANs.
