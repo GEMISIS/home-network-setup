@@ -65,7 +65,7 @@ in {
     };
     macMiniPorts = mkOption {
       type = types.listOf types.int;
-      default = [ 8080 8443 ];
+      default = [ 8443 ];
       description = "Ports exposed by the Mac Mini to other VLANs.";
     };
   };

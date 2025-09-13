@@ -91,7 +91,7 @@
 
     mgmtAdminPorts = [ 22 443 ];
     macMiniIp = "192.168.70.100";
-    macMiniPorts = [ 8080 8443 ];
+    macMiniPorts = [ 1337 8080 8443 ];
   };
 
   # mDNS reflection for HomeKit + Chromecast (50↔40, 50↔10, 50↔20)
