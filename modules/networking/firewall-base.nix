@@ -22,8 +22,20 @@ with lib; let
     allowedTCPPorts = [ 53 ];
   };
   ifaceRules = genAttrs vlanIfaces (iface:
-    if iface == mgmtIface || iface == homeIface then
-      defaultIface // { allowedTCPPorts = defaultIface.allowedTCPPorts ++ [ 22 443 ]; }
+    if iface == mgmtIface then
+      defaultIface // {
+        allowedTCPPorts = defaultIface.allowedTCPPorts ++ [ 22 443 8443 ];
+      }
+    else if iface == homeIface then
+      defaultIface // {
+        allowedTCPPorts = defaultIface.allowedTCPPorts ++ [ 22 443 ];
+      }
+    else if iface == hw.trunk.iface then
+      defaultIface // {
+        # UniFi device discovery & control (WAPs on VLAN 50)
+        allowedTCPPorts = defaultIface.allowedTCPPorts ++ [ 8080 ];
+        allowedUDPPorts = defaultIface.allowedUDPPorts ++ [ 3478 10001 ];
+      }
     else
       defaultIface
   );

@@ -14,6 +14,11 @@
         KbdInteractiveAuthentication = false;
       };
     };
+
+    unifi = {
+      enable = true;
+      openFirewall = false; # manual firewall rules below
+    };
   };
 
   systemd.coredump.enable = true;
