@@ -31,6 +31,15 @@ let
   chromecastIfaces = "{ \"${ifaceFor vlans.home}\", \"${ifaceFor vlans.media}\" }";
   haIp = "192.168.50.10";
   macMiniIp = cfg.macMiniIp;
+  mgmtSubnet =
+    let
+      cidr = config.router.addr4.base."${toString vlans.mgmt}";
+      parts = splitString "/" cidr;
+      ip = elemAt parts 0;
+      prefix = elemAt parts 1;
+      octets = splitString "." ip;
+      base = concatStringsSep "." [ (elemAt octets 0) (elemAt octets 1) (elemAt octets 2) "0" ];
+    in "${base}/${prefix}";
 
 in {
   options.router.networking.policies = {
@@ -94,6 +103,10 @@ in {
 
       # Management network administrative access
       iifname "${ifaceFor vlans.mgmt}" ip daddr ${rfc1918Addrs} tcp dport ${mkSet cfg.mgmtAdminPorts} accept
+
+      # Home and Media network access to Management admin ports
+      iifname "${ifaceFor vlans.home}" oifname "${ifaceFor vlans.mgmt}" ip daddr ${mgmtSubnet} tcp dport ${mkSet cfg.mgmtAdminPorts} accept
+      iifname "${ifaceFor vlans.media}" oifname "${ifaceFor vlans.mgmt}" ip daddr ${mgmtSubnet} tcp dport ${mkSet cfg.mgmtAdminPorts} accept
 
       # Access Mac Mini from Home and Media VLANs
       iifname "${ifaceFor vlans.home}" oifname "${ifaceFor vlans.mgmt}" ip daddr ${macMiniIp} tcp dport ${mkSet cfg.macMiniPorts} accept
