@@ -30,6 +30,7 @@ let
   chromecastUdp = "{ 1900, 5353 }";
   chromecastIfaces = "{ \"${ifaceFor vlans.home}\", \"${ifaceFor vlans.media}\" }";
   haIp = "192.168.50.10";
+  macMiniIp = cfg.macMiniIp;
 
 in {
   options.router.networking.policies = {
@@ -57,6 +58,16 @@ in {
       type = types.listOf types.int;
       default = [ 22 443 ];
     };
+    macMiniIp = mkOption {
+      type = types.str;
+      default = "192.168.70.100";
+      description = "IP address of the Mac Mini on the management network.";
+    };
+    macMiniPorts = mkOption {
+      type = types.listOf types.int;
+      default = [ 8080 8443 ];
+      description = "Ports exposed by the Mac Mini to other VLANs.";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -83,6 +94,10 @@ in {
 
       # Management network administrative access
       iifname "${ifaceFor vlans.mgmt}" ip daddr ${rfc1918Addrs} tcp dport ${mkSet cfg.mgmtAdminPorts} accept
+
+      # Access Mac Mini from Home
+      iifname "${ifaceFor vlans.home}" oifname "${ifaceFor vlans.mgmt}" ip daddr ${macMiniIp} tcp dport ${mkSet cfg.macMiniPorts} accept
+      iifname "${ifaceFor vlans.home}" oifname "${ifaceFor vlans.mgmt}" ip daddr ${macMiniIp} udp dport ${mkSet cfg.macMiniPorts} accept
 
       # Default deny between RFC1918 subnets
       iifname ${internalIfaceSet} oifname ${internalIfaceSet} ip saddr ${rfc1918Addrs} ip daddr ${rfc1918Addrs} drop
