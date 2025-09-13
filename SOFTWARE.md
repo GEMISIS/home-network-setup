@@ -10,6 +10,7 @@ This document describes the software components and logical flows required to im
 | Routing & Firewall | **nftables** with NixOS firewall | IPv4/IPv6 forwarding, NAT and inter‑VLAN policy |
 | DHCP & DNS | **dnsmasq** | Per‑VLAN address pools and local DNS cache |
 | VPN (remote management) | **WireGuard** | Secure access into VLAN 70 |
+| WAP management | **UniFi Controller** | Adopt and manage access points on VLAN 50 |
 | Log shipping | _Disabled (was Promtail → Loki)_ | Local log storage on the router |
 | Intrusion prevention | _Disabled (was CrowdSec with nftables bouncer)_ | Brute‑force and bot protection |
 | Optional advanced DHCP/DNS | **Kea** + **Unbound** | Replace dnsmasq when split services are required |
@@ -23,6 +24,7 @@ flowchart LR
         NF["nftables"]
         DM["dnsmasq"]
         WG["WireGuard"]
+        UC["UniFi Controller"]
         PR["Promtail (disabled)"]
         CS["CrowdSec (disabled)"]
         LK["Loki (disabled)"]
@@ -42,6 +44,8 @@ flowchart LR
 
     ISP["ISP / Internet"]
 
+    WAPs["UniFi APs</br>Mgmt VLAN 50"]
+
     %% Service links
     DHCPVLANs -->|"DHCP/DNS"| DM
     HA -->|"DNS"| DM
@@ -49,6 +53,7 @@ flowchart LR
     HA -->|"Firewall rules"| NF
     NF -->|"NAT & filtering"| ISP
     WG -->|"Remote access"| Mgmt
+    WAPs -->|"Adoption & mgmt"| UC
     NF -.->|"logs"| PR
     DM -.->|"logs"| PR
     WG -.->|"logs"| PR
