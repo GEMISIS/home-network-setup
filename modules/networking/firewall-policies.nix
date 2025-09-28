@@ -40,7 +40,7 @@ in {
     };
     haToAutomationPorts = mkOption {
       type = types.listOf types.int;
-      default = [ 6053 1900 8008 8009 8443 5540 5541 ];
+      default = [ 6053 1900 8008 8009 8443 5540 5541 631 9100 515 ];
     };
     haToIotPorts = mkOption {
       type = types.listOf types.int;
@@ -49,6 +49,21 @@ in {
     haToCamerasPorts = mkOption {
       type = types.listOf types.int;
       default = [ 554 80 443 ];
+    };
+    printerSubnet = mkOption {
+      type = types.str;
+      default = "192.168.20.0/24";
+      description = "Subnet (CIDR) containing the isolated IoT printer.";
+    };
+    printerTcpPorts = mkOption {
+      type = types.listOf types.int;
+      default = [ 631 9100 515 ];
+      description = "TCP ports exposed by the network printer (IPP, JetDirect, LPD).";
+    };
+    printerUdpPorts = mkOption {
+      type = types.listOf types.int;
+      default = [ 631 ];
+      description = "UDP ports exposed by the network printer (IPP discovery, etc.).";
     };
     haHomeKitRange = mkOption {
       type = types.str;
@@ -83,6 +98,14 @@ in {
       # Home Assistant to Cameras VLAN
       iifname "${ifaceFor vlans.media}" ip saddr ${haIp} oifname "${ifaceFor vlans.cams}" tcp dport ${mkSet cfg.haToCamerasPorts} accept
       iifname "${ifaceFor vlans.media}" ip saddr ${haIp} oifname "${ifaceFor vlans.cams}" udp dport ${mkSet cfg.haToCamerasPorts} accept
+
+      # Allow family devices to reach the printer on the automation VLAN
+      iifname "${ifaceFor vlans.home}" oifname "${ifaceFor vlans.autom}" ip daddr ${cfg.printerSubnet} tcp dport ${mkSet cfg.printerTcpPorts} accept
+      iifname "${ifaceFor vlans.home}" oifname "${ifaceFor vlans.autom}" ip daddr ${cfg.printerSubnet} udp dport ${mkSet cfg.printerUdpPorts} accept
+
+      # Allow guest devices to reach the printer on the automation VLAN
+      iifname "${ifaceFor vlans.guest}" oifname "${ifaceFor vlans.autom}" ip daddr ${cfg.printerSubnet} tcp dport ${mkSet cfg.printerTcpPorts} accept
+      iifname "${ifaceFor vlans.guest}" oifname "${ifaceFor vlans.autom}" ip daddr ${cfg.printerSubnet} udp dport ${mkSet cfg.printerUdpPorts} accept
 
       # Home Assistant to Chromecast targets on Home and Media VLANs
       iifname "${ifaceFor vlans.media}" ip saddr ${haIp} oifname ${chromecastIfaces} tcp dport ${chromecastTcp} accept

@@ -83,7 +83,7 @@
     enable = true;
 
     # ESPHome, SSDP, Chromecast control, Matter (UDP/TCP 5540 + TCP 5541)
-    haToAutomationPorts = [ 6053 1900 8008 8009 8443 5540 5541 ];
+    haToAutomationPorts = [ 6053 1900 8008 8009 8443 5540 5541 631 9100 515 ];
     haToCamerasPorts = [ 554 80 443 ];
 
     # HomeKit bridge TCP range
