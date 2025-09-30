@@ -83,6 +83,11 @@ in {
       default = [ 8443 ];
       description = "Ports exposed by the Mac Mini to other VLANs.";
     };
+    haMacMiniPorts = mkOption {
+      type = types.listOf types.int;
+      default = [ 11434 ];
+      description = "Ports Home Assistant may access on the Mac Mini.";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -114,6 +119,9 @@ in {
       # Home Assistant HomeKit (TCP range + mDNS)
       iifname "${ifaceFor vlans.media}" ip saddr ${haIp} ip daddr ${rfc1918Addrs} tcp dport ${cfg.haHomeKitRange} accept
       iifname "${ifaceFor vlans.media}" ip saddr ${haIp} ip daddr ${rfc1918Addrs} udp dport 5353 accept
+
+      # Home Assistant access to Mac Mini for Ollama
+      iifname "${ifaceFor vlans.media}" ip saddr ${haIp} oifname "${ifaceFor vlans.mgmt}" ip daddr ${macMiniIp} tcp dport ${mkSet cfg.haMacMiniPorts} accept
 
       # Management network administrative access
       iifname "${ifaceFor vlans.mgmt}" ip daddr ${rfc1918Addrs} tcp dport ${mkSet cfg.mgmtAdminPorts} accept
