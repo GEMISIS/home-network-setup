@@ -112,6 +112,10 @@ in {
       iifname "${ifaceFor vlans.guest}" oifname "${ifaceFor vlans.autom}" ip daddr ${cfg.printerSubnet} tcp dport ${mkSet cfg.printerTcpPorts} accept
       iifname "${ifaceFor vlans.guest}" oifname "${ifaceFor vlans.autom}" ip daddr ${cfg.printerSubnet} udp dport ${mkSet cfg.printerUdpPorts} accept
 
+      # Allow guest devices to access Chromecast devices on the IoT VLAN
+      iifname "${ifaceFor vlans.guest}" oifname "${ifaceFor vlans.iot}" tcp dport ${chromecastTcp} accept
+      iifname "${ifaceFor vlans.guest}" oifname "${ifaceFor vlans.iot}" udp dport ${chromecastUdp} accept
+
       # Home Assistant to Chromecast targets on Home and Media VLANs
       iifname "${ifaceFor vlans.media}" ip saddr ${haIp} oifname ${chromecastIfaces} tcp dport ${chromecastTcp} accept
       iifname "${ifaceFor vlans.media}" ip saddr ${haIp} oifname ${chromecastIfaces} udp dport ${chromecastUdp} accept
