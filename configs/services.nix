@@ -1,11 +1,16 @@
 { config, lib, pkgs, ... }:
 {
   services = {
-    journald.extraConfig = ''
-      Storage=persistent
-      SystemMaxUse=500M
-      RuntimeMaxUse=200M
-    '';
+    journald = {
+      extraConfig = ''
+        Storage=persistent
+        SystemMaxUse=500M
+        RuntimeMaxUse=200M
+        RateLimitInterval=15s
+        RateLimitBurst=5000
+      '';
+      storage = "persistent";
+    };
 
     openssh = {
       enable = true;
