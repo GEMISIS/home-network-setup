@@ -32,6 +32,9 @@
 
   # Device basics
   networking.hostName = "McAlister-Home";
+  networking.hosts = lib.mkForce {
+    "192.168.70.1" = [ "McAlister-Home" ];
+  };
   time.timeZone = "America/Los_Angeles";
 
   nix = {
