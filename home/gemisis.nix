@@ -34,9 +34,9 @@
 
   programs.git = {
     enable = true;
-    userName = "GEMISIS";
-    userEmail = "gemisis@users.noreply.github.com";
-    extraConfig = {
+    settings = {
+      user.name = "GEMISIS";
+      user.email = "gemisis@users.noreply.github.com";
       init.defaultBranch = "main";
     };
   };
