@@ -9,17 +9,23 @@
   programs.vim.enable = true;
 
   services.ssh-agent.enable = true;
+  
+  programs.ssh.matchBlocks."github.com" = {
+    user = "git";
+    identityFile = "~/.ssh/gemisis-git";
+    identitiesOnly = true;
 
-  programs.ssh = {
-    enable = true;
-    matchBlocks = {
-      "github.com" = {
-        user = "git";
-        identityFile = "~/.ssh/gemisis-git";
-        identitiesOnly = true;
-      };
-    };
   };
+  #programs.ssh = {
+  #  enable = true;
+  #  matchBlocks = {
+  #    "github.com" = {
+  #      user = "git";
+  #      identityFile = "~/.ssh/gemisis-git";
+  #      identitiesOnly = true;
+  #    };
+  #  };
+  #};
 
   home.file.".ssh/gemisis-git" = {
     source = config.lib.file.mkOutOfStoreSymlink "/persist/ssh/gemisis-git";
