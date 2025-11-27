@@ -50,7 +50,7 @@
           --rm \
           -p 8008:8080 \
           -v /var/lib/open-webui:/app/backend/data \
-          ghcr.io/open-webui/open-webui:0.6.37
+          ghcr.io/open-webui/open-webui:0.6.40
       '';
 
       ExecStop = ''
