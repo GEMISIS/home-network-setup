@@ -24,11 +24,13 @@ with lib; let
   ifaceRules = genAttrs vlanIfaces (iface:
     if iface == mgmtIface then
       defaultIface // {
-        allowedTCPPorts = defaultIface.allowedTCPPorts ++ [ 22 443 8080 8443 8008 ];
+        allowedTCPPorts = defaultIface.allowedTCPPorts ++ [ 1337 22 443 8080 8443 8008 ];
+        allowedUDPPorts = defaultIface.allowedUDPPorts ++ [ 1337 ];
       }
     else if iface == homeIface then
       defaultIface // {
-        allowedTCPPorts = defaultIface.allowedTCPPorts ++ [ 22 443 8080 8443 8008 ];
+        allowedTCPPorts = defaultIface.allowedTCPPorts ++ [ 1337 22 443 8080 8443 8008 ];
+        allowedUDPPorts = defaultIface.allowedUDPPorts ++ [ 1337 ];
       }
     else if iface == hw.trunk.iface then
       defaultIface // {
