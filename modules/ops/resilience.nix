@@ -26,9 +26,6 @@ in {
       # Reboot fast on the next Oops instead of running corrupted for hours.
       "kernel.panic_on_oops" = 1;
       "kernel.panic" = 10; # reboot 10s after a panic
-
-      # Drop automatic conntrack helper assignment (unused under nftables).
-      "net.netfilter.nf_conntrack_helper" = 0;
     };
 
     # Hardware watchdog (box exposes iTCO_wdt / intel_oc_wdt -> /dev/watchdog).
@@ -38,7 +35,10 @@ in {
       rebootTime = "10m";
     };
 
-    # Remove dead conntrack helper surface (auto-loaded, unused, historically buggy).
+    # Remove dead conntrack helper surface (auto-loaded, unused under nftables,
+    # historically buggy). This is what actually prevents helper assignment;
+    # the net.netfilter.nf_conntrack_helper sysctl isn't registered on this
+    # kernel, so blacklisting the modules is the mechanism.
     boot.blacklistedKernelModules = [ "nf_conntrack_ftp" "nf_nat_ftp" ];
 
     # Quiet the flood of TPM RNG errors by trusting CPU/bootloader entropy.
