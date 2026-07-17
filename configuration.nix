@@ -21,7 +21,6 @@
       ./modules/ops/updates.nix
       ./modules/ops/hardening.nix
       ./modules/ops/resilience.nix
-      ./modules/ops/logging.nix
     ];
 
   # Use the systemd-boot EFI boot loader.
@@ -117,9 +116,6 @@
   # Crash self-healing + durable crash capture (panic_on_oops, HW watchdog,
   # persistent journal/pstore). See modules/ops/resilience.nix.
   router.ops.resilience.enable = true;
-
-  # Ship logs off-box to Loki (hardened Promtail). See modules/ops/logging.nix.
-  router.ops.logging.enable = true;
 
 
   # IPv4 only for now; leave IPv6 disabled/untouched.
