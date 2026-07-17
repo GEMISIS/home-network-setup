@@ -20,11 +20,15 @@
       ./modules/networking/discovery.nix
       ./modules/ops/updates.nix
       ./modules/ops/hardening.nix
+      ./modules/ops/resilience.nix
+      ./modules/ops/logging.nix
     ];
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  # Keep several generations selectable at boot for kernel rollback.
+  boot.loader.systemd-boot.configurationLimit = 10;
 
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -101,12 +105,21 @@
   router.networking.discovery.enable = true;
 
   # Ops
-  router.ops.updates.enable = true;
+  # Kernel/system updates are done manually + tested with rollback (see below),
+  # so unattended auto-upgrade is disabled to avoid pulling a fresh regression.
+  router.ops.updates.enable = false;
 
   router.ops.hardening = {
     enable = true;
     sshAllowedUsers = [ "gemisis" ];
   };
+
+  # Crash self-healing + durable crash capture (panic_on_oops, HW watchdog,
+  # persistent journal/pstore). See modules/ops/resilience.nix.
+  router.ops.resilience.enable = true;
+
+  # Ship logs off-box to Loki (hardened Promtail). See modules/ops/logging.nix.
+  router.ops.logging.enable = true;
 
 
   # IPv4 only for now; leave IPv6 disabled/untouched.
