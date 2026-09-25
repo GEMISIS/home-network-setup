@@ -27,10 +27,6 @@
     };
   };
 
-  # After an unclean shutdown mongod recovery can take minutes; the default
-  # 90s start timeout kills it mid-recovery and restart-loops (2026-09-24).
-  systemd.services.unifi.serviceConfig.TimeoutStartSec = "15min";
-
   systemd.coredump.enable = true;
 
   # Enable docker
