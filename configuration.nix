@@ -21,6 +21,7 @@
       ./modules/ops/updates.nix
       ./modules/ops/hardening.nix
       ./modules/ops/resilience.nix
+      ./modules/ops/disk-safety.nix
     ];
 
   # Use the systemd-boot EFI boot loader.
@@ -116,6 +117,10 @@
   # Crash self-healing + durable crash capture (panic_on_oops, HW watchdog,
   # persistent journal/pstore). See modules/ops/resilience.nix.
   router.ops.resilience.enable = true;
+
+  # Log rotation, Nix GC, btrfs scrub and a disk-full guard.
+  # See modules/ops/disk-safety.nix.
+  router.ops.diskSafety.enable = true;
 
 
   # IPv4 only for now; leave IPv6 disabled/untouched.
