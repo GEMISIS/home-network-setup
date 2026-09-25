@@ -58,15 +58,12 @@ The main machine is running NixOS, and this repo contains its configurations. Fu
    sudo cat /root/age.key.pub > keys/age.pub
    ```
 
-3. **Create the login password hash** (kept on the machine, never in the repo; users are immutable, so without it `gemisis` has SSH-key-only access and `sudo` won't work):
-   ```bash
-   sudo sh -c 'umask 077; mkdir -p /var/lib/secrets; nix shell nixpkgs#mkpasswd -c mkpasswd -m yescrypt > /var/lib/secrets/gemisis.hash'
-   ```
+3. **Configure Git (optional):** set your user and remote so changes can be pushed back upstream.
 
-4. **Configure Git (optional):** set your user and remote so changes can be pushed back upstream.
-
-5. **Deploy:**
+4. **Deploy:**
    ```bash
    sudo nixos-rebuild switch
    ```
    Run this again whenever pulling new changes.
+
+   There are no passwords: log in with your SSH key and connect with agent forwarding (`ssh -A`) so `sudo` can authenticate against that key.
