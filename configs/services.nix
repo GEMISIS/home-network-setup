@@ -31,6 +31,12 @@
 
   # Enable docker
   virtualisation.docker.enable = true;
+  # Old Open WebUI images otherwise accumulate forever (21 GB by 2026-09-25).
+  virtualisation.docker.autoPrune = {
+    enable = true;
+    dates = "weekly";
+    flags = [ "--all" ];
+  };
 
   # Systemd unit that runs the Open WebUI container
   systemd.services.open-webui-docker = {

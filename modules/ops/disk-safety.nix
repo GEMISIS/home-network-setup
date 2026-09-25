@@ -8,6 +8,15 @@ let
   diskGuard = pkgs.writeShellScript "disk-guard" ''
     set -u
     pct=$(df --output=pcent / | tail -1 | tr -dc 0-9)
+    # btrfs can ENOSPC with df showing free space once every chunk is
+    # allocated, so watch unallocated space too.
+    unalloc=$(btrfs filesystem usage -b / | awk '/Device unallocated:/ {print $3}')
+    unalloc_gib=$(( unalloc / 1024 / 1024 / 1024 ))
+
+    if [ "$unalloc_gib" -lt ${toString cfg.minUnallocatedGiB} ]; then
+      echo "<3>disk-guard: only ''${unalloc_gib} GiB btrfs unallocated - rebalancing"
+      btrfs balance start -dusage=20 /
+    fi
 
     if [ "$pct" -ge ${toString cfg.emergencyPercent} ]; then
       echo "<2>disk-guard: / is at ''${pct}% - running emergency cleanup"
@@ -41,6 +50,12 @@ in {
       type = types.int;
       default = 85;
       description = "Root usage (%) at which disk-guard logs an error.";
+    };
+
+    minUnallocatedGiB = mkOption {
+      type = types.int;
+      default = 5;
+      description = "Below this much btrfs unallocated space, disk-guard runs a light balance.";
     };
 
     emergencyPercent = mkOption {
@@ -87,10 +102,31 @@ in {
       fileSystems = [ "/" ];
     };
 
+    # Compact partly-empty chunks back into unallocated space so metadata can
+    # always grow (on 2026-09-25 only 3 GiB was left unallocated).
+    systemd.services.btrfs-balance = {
+      description = "Light btrfs balance of /";
+      serviceConfig = {
+        Type = "oneshot";
+        Nice = 19;
+        IOSchedulingClass = "idle";
+        ExecStart = "${pkgs.btrfs-progs}/bin/btrfs balance start -dusage=50 -musage=50 /";
+      };
+    };
+
+    systemd.timers.btrfs-balance = {
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "monthly";
+        Persistent = true;
+        RandomizedDelaySec = "1h";
+      };
+    };
+
     # Check `journalctl -t disk-guard -u disk-guard` for warnings.
     systemd.services.disk-guard = {
       description = "Warn on, and recover from, a nearly full root filesystem";
-      path = [ pkgs.coreutils pkgs.findutils config.systemd.package ];
+      path = [ pkgs.coreutils pkgs.findutils pkgs.gawk pkgs.btrfs-progs config.systemd.package ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = diskGuard;
